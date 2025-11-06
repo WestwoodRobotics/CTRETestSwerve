@@ -24,11 +24,12 @@ public class Robot extends TimedRobot {
 
     try{
       Orchestra orchestra = new Orchestra();
-      String midiString = "/home/lvuser/deploy/output.chrp";
+      String midiString = "/home/lvuser/deploy/clashRoyale.chrp";
       Orchestrate music = new Orchestrate(m_robotContainer.drivetrain, orchestra, midiString);
       CommandScheduler.getInstance().schedule(music);
       } catch (Exception e){
           System.out.println("Failed to play music" + e.getMessage());
+          e.printStackTrace();
       }
   }
   @Override
