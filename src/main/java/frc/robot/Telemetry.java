@@ -33,9 +33,9 @@ public class Telemetry {
         SignalLogger.start();
 
         /* Set up the module state Mechanism2d telemetry */
-        for (int i = 0; i < 4; ++i) {
-            SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
-        }
+        // for (int i = 0; i < 4; ++i) {
+        //     SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
+        // }
     }
 
     /* What to publish over networktables for telemetry */
@@ -112,6 +112,11 @@ public class Telemetry {
         SignalLogger.writeDoubleArray("DriveState/ModuleStates", m_moduleStatesArray);
         SignalLogger.writeDoubleArray("DriveState/ModuleTargets", m_moduleTargetsArray);
         SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
+
+        /* SmartDashboard Data */
+        SmartDashboard.putNumber("Robot Pose X", state.Pose.getX());
+        SmartDashboard.putNumber("Robot Pose Y", state.Pose.getY());
+        SmartDashboard.putNumber("Robot Pose Rotation", state.Pose.getRotation().getDegrees());
 
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");
