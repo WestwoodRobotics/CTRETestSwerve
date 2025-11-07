@@ -1,5 +1,7 @@
 package frc.robot;
 
+import java.util.Map;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
@@ -14,6 +16,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -86,6 +90,8 @@ public class Telemetry {
     private final double[] m_moduleStatesArray = new double[8];
     private final double[] m_moduleTargetsArray = new double[8];
 
+    private final Field2d field = new edu.wpi.first.wpilibj.smartdashboard.Field2d();
+
     /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
     public void telemeterize(SwerveDriveState state) {
         /* Telemeterize the swerve drive state */
@@ -117,6 +123,8 @@ public class Telemetry {
         SmartDashboard.putNumber("Robot Pose X", state.Pose.getX());
         SmartDashboard.putNumber("Robot Pose Y", state.Pose.getY());
         SmartDashboard.putNumber("Robot Pose Rotation", state.Pose.getRotation().getDegrees());
+        field.setRobotPose(state.Pose);
+        SmartDashboard.putData("Field", field);
 
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");
