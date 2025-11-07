@@ -12,6 +12,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -41,7 +42,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     private final SendableChooser<Command> autoChooser;
-
+    
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/clashRoyale.chrp");
 
     public RobotContainer() {
@@ -57,10 +58,21 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(-Math.copySign(joystick.getLeftY() * joystick.getLeftY(), joystick.getLeftY()) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
-                    .withVelocityY(-Math.copySign(joystick.getLeftX() * joystick.getLeftX(), joystick.getLeftX()) * MaxSpeed) // Drive left with squared X (maintaining sign)
-                    .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate) // Drive counterclockwise with squared X (maintaining sign)
+            drivetrain.applyRequest(() -> {
+                    //distance formula
+                    double magnitude = Math.sqrt(
+                        Math.pow(joystick.getLeftX(), 2) 
+                        + Math.pow(joystick.getLeftY(), 2)
+                    );
+
+                    double angle = Math.atan2(joystick.getLeftY(), joystick.getLeftX()); // angle of joystick
+                    double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
+                    double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
+
+                    return drive.withVelocityX(-(yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
+                    .withVelocityY(-(xMagnitude) * MaxSpeed) // Drive left with squared X (maintaining sign)
+                    .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
+                }  
             )
         );
 
