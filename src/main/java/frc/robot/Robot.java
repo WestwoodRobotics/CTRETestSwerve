@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.Orchestra;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,10 +22,8 @@ public class Robot extends TimedRobot {
   public void robotInit() {
 
     try{
-      Orchestra orchestra = new Orchestra();
-      String midiString = "/home/lvuser/deploy/clashRoyale.chrp";
-      Orchestrate music = new Orchestrate(m_robotContainer.drivetrain, orchestra, midiString);
-      CommandScheduler.getInstance().schedule(music);
+     
+      m_robotContainer.music.schedule();
       } catch (Exception e){
           System.out.println("Failed to play music" + e.getMessage());
           e.printStackTrace();
