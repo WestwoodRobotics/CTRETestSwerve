@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -48,7 +49,6 @@ public class RobotContainer {
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
-        drivetrain.resetRotation(new Rotation2d(0));
         
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -100,7 +100,7 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
-        joystick.rightBumper().whileTrue(music);
+        joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         drivetrain.registerTelemetry(logger::telemeterize);
