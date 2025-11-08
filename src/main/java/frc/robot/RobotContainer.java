@@ -8,6 +8,13 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.configs.CANdleConfiguration;
+import com.ctre.phoenix6.controls.ColorFlowAnimation;
+import com.ctre.phoenix6.controls.EmptyAnimation;
+import com.ctre.phoenix6.controls.SolidColor;
+import com.ctre.phoenix6.hardware.CANdle;
+import com.ctre.phoenix6.signals.RGBWColor;
+import com.ctre.phoenix6.signals.StripTypeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 
@@ -24,6 +31,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import edu.wpi.first.wpilibj.util.Color;
+
+
 
 public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -42,6 +52,8 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
+    public CANdle candle = new CANdle(50, "CANivore");
+
     private final SendableChooser<Command> autoChooser;
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/clashRoyale.chrp");
@@ -49,7 +61,15 @@ public class RobotContainer {
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
         drivetrain.resetRotation(new Rotation2d(0));
+
         
+        var cfg = new CANdleConfiguration();
+        cfg.LED.BrightnessScalar = 1;
+        cfg.LED.StripType = StripTypeValue.GRB;
+    
+        candle.getConfigurator().apply(cfg);
+        
+
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -83,10 +103,10 @@ public class RobotContainer {
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
-
+        joystick.x().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))));
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         ));
 
         // Zero drivetrain heading on left joystick press

@@ -22,12 +22,14 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -275,6 +277,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+        var llResult = LimelightHelpers.getLatestResults("limelight");
+        if(llResult != null && llResult.valid && llResult.botpose_tagcount > 0){
+        
+            Pose2d llPose = llResult.getBotPose2d_wpiBlue();
+            double llTimestamp = Timer.getFPGATimestamp() - (llResult.latency_pipeline / 1000.0) - (llResult.latency_capture/ 1000.0);
+            addVisionMeasurement(llPose, llTimestamp);
+        }
+        SmartDashboard.putBoolean("llresult valid", llResult.valid);
+        SmartDashboard.putBoolean("llresult not null", llResult != null);
+        SmartDashboard.putNumber("llresult tagcount", llResult.botpose_tagcount);
     }
 
     private void startSimThread() {
