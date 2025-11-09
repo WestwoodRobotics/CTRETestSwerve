@@ -52,7 +52,7 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    public CANdle candle = new CANdle(50, "CANivore");
+    public CANdle candle = new CANdle(50, "rio");
 
     private final SendableChooser<Command> autoChooser;
     
@@ -64,12 +64,16 @@ public class RobotContainer {
 
         
         var cfg = new CANdleConfiguration();
-        cfg.LED.BrightnessScalar = 1;
+        cfg.LED.BrightnessScalar = 1.0;
         cfg.LED.StripType = StripTypeValue.GRB;
-    
+
         candle.getConfigurator().apply(cfg);
         
+        for (int i = 0; i < 8; i++){
+            candle.setControl(new EmptyAnimation(i));
+        }
 
+        candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kWhite).scaleBrightness(1)));
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -103,7 +107,6 @@ public class RobotContainer {
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
-        joystick.x().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))));
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
         point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
