@@ -278,12 +278,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
         var llResult = LimelightHelpers.getLatestResults("limelight");
-        if(llResult != null && llResult.valid && llResult.botpose_tagcount > 0){
+        if(llResult != null && llResult.valid && llResult.botpose_tagcount > 1){
         
-            Pose2d llPose = llResult.getBotPose2d_wpiBlue();
+            Pose2d llPose = LimelightHelpers.getBotPose2d_wpiBlue("limelight");
             double llTimestamp = Timer.getFPGATimestamp() - (llResult.latency_pipeline / 1000.0) - (llResult.latency_capture/ 1000.0);
             addVisionMeasurement(llPose, llTimestamp);
         }
+        SmartDashboard.putNumber("number of limelights", llResult.botpose_tagcount);
         SmartDashboard.putBoolean("llresult valid", llResult.valid);
         SmartDashboard.putBoolean("llresult not null", llResult != null);
         SmartDashboard.putNumber("llresult tagcount", llResult.botpose_tagcount);

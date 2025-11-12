@@ -41,6 +41,7 @@ public class LimelightHelpers {
 
     private static final Map<String, DoubleArrayEntry> doubleArrayEntries = new ConcurrentHashMap<>();
 
+    public static LimelightTarget_Retro llretro= new LimelightTarget_Retro();
     /**
      * Represents a Color/Retroreflective Target Result extracted from JSON Output
      */

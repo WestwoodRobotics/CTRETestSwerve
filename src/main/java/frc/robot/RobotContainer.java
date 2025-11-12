@@ -52,7 +52,7 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    public CANdle candle = new CANdle(50, "rio");
+    public CANdle candle = new CANdle(50);
 
     private final SendableChooser<Command> autoChooser;
     
@@ -63,7 +63,7 @@ public class RobotContainer {
         drivetrain.resetRotation(new Rotation2d(0));
 
         
-        var cfg = new CANdleConfiguration();
+        CANdleConfiguration cfg = new CANdleConfiguration();
         cfg.LED.BrightnessScalar = 1.0;
         cfg.LED.StripType = StripTypeValue.GRB;
 
@@ -73,7 +73,7 @@ public class RobotContainer {
             candle.setControl(new EmptyAnimation(i));
         }
 
-        candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kWhite).scaleBrightness(1)));
+        candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)));
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
