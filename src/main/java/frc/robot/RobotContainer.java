@@ -52,7 +52,7 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    public CANdle candle = new CANdle(50);
+    public CANdle candle = new CANdle(50, "rio");
 
     private final SendableChooser<Command> autoChooser;
     
@@ -73,7 +73,6 @@ public class RobotContainer {
             candle.setControl(new EmptyAnimation(i));
         }
 
-        candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)));
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -114,7 +113,7 @@ public class RobotContainer {
 
         // Zero drivetrain heading on left joystick press
         joystick.rightStick().onFalse(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
-
+        
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
         joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
@@ -123,7 +122,7 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
-        joystick.rightBumper().whileTrue(music);
+        joystick.rightBumper().whileTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))));
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         drivetrain.registerTelemetry(logger::telemeterize);
