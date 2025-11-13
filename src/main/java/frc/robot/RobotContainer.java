@@ -52,7 +52,7 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    public CANdle candle = new CANdle(50, "rio");
+    public CANdle candle = new CANdle(50, "CANivore");
 
     private final SendableChooser<Command> autoChooser;
     
@@ -122,9 +122,10 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
-        joystick.rightBumper().whileTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))));
-        joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
+        joystick.rightBumper().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kBlue).scaleBrightness(1)))))
+        .onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
+         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+ 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 
