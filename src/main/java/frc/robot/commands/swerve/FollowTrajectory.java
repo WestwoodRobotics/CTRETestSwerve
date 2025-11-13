@@ -47,7 +47,7 @@ public class FollowTrajectory extends Command{
             drivetrain.getState().Pose.getY(),
             drivetrain.getState().Pose.getRotation());
 
-        endingPose = TrajectoryConstants.kCenterField;
+        endingPose = startingPose.transformBy(TrajectoryConstants.kPoseTransform);
 
         trajectory = createTrajectory(startingPose, endingPose);
 
