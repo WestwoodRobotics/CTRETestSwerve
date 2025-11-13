@@ -89,7 +89,7 @@ public class Telemetry {
     private final double[] m_poseArray = new double[3];
     private final double[] m_moduleStatesArray = new double[8];
     private final double[] m_moduleTargetsArray = new double[8];
-
+    
     private final Field2d field = new edu.wpi.first.wpilibj.smartdashboard.Field2d();
 
     /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
@@ -120,11 +120,22 @@ public class Telemetry {
         SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
 
         /* SmartDashboard Data */
-        SmartDashboard.putNumber("Robot Pose X", state.Pose.getX());
+        SmartDashboard.putNumber("Robot Posqe X", state.Pose.getX());
         SmartDashboard.putNumber("Robot Pose Y", state.Pose.getY());
         SmartDashboard.putNumber("Robot Pose Rotation", state.Pose.getRotation().getDegrees());
         field.setRobotPose(state.Pose);
         SmartDashboard.putData("Field", field);
+        /* LimelightHelpers.setPipelineIndex("limelight", 1);
+        SmartDashboard.putNumber("Limelight TX", LimelightHelpers.getTX("limelight"));
+        SmartDashboard.putNumber("Limelight TA", LimelightHelpers.getTA("limelight"));
+        SmartDashboard.putNumber("Limelight TY", LimelightHelpers.getTX("limelight"));
+        SmartDashboard.putBoolean("Limelight TV", LimelightHelpers.getTV("limelight")); */
+         LimelightHelpers.setPipelineIndex("limelight" , 0);
+        SmartDashboard.putNumber("Limelight pose X", LimelightHelpers.getBotPose2d("limelight").getX());
+        SmartDashboard.putNumber("Limelight pose Y", LimelightHelpers.getBotPose2d("limelight").getY());
+        SmartDashboard.putNumber("Limelight heading", LimelightHelpers.getBotPose2d("limelight").getRotation().getDegrees()); 
+        SmartDashboard.putBoolean("Limelight TV", LimelightHelpers.getTV("limelight")); 
+
 
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");
