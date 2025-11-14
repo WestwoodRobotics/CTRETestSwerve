@@ -56,7 +56,7 @@ public class RobotContainer {
 
     private final SendableChooser<Command> autoChooser;
     
-    public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/clashRoyale.chrp");
+    public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
@@ -128,6 +128,8 @@ public class RobotContainer {
         .onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
         // reset the field-centric heading on left bumper press
          joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+
+        joystick.povLeft().whileTrue(music);
  
         drivetrain.registerTelemetry(logger::telemeterize);
     }
