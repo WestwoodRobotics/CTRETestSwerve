@@ -3,6 +3,7 @@ package frc.robot;
 import java.util.Map;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -26,6 +27,12 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 
 public class Telemetry {
     private final double MaxSpeed;
+    private double prevVx;
+    private double prevVy;
+    private double maxAccel;
+    private double prevOmega;
+    private double maxAngularAccel;
+    private Pigeon2 pigeon;
 
     /**
      * Construct a telemetry object, with the specified max speed of the robot
@@ -34,6 +41,10 @@ public class Telemetry {
      */
     public Telemetry(double maxSpeed) {
         MaxSpeed = maxSpeed;
+        pigeon = new Pigeon2(2, "SwerveCAN");
+        maxAccel = 0.0;
+        prevOmega = 0.0;
+        maxAngularAccel = 0.0;
         SignalLogger.start();
 
         /* Set up the module state Mechanism2d telemetry */
@@ -120,7 +131,7 @@ public class Telemetry {
         SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
 
         /* SmartDashboard Data */
-        SmartDashboard.putNumber("Robot Posqe X", state.Pose.getX());
+        SmartDashboard.putNumber("Robot Pose X", state.Pose.getX());
         SmartDashboard.putNumber("Robot Pose Y", state.Pose.getY());
         SmartDashboard.putNumber("Robot Pose Rotation", state.Pose.getRotation().getDegrees());
         field.setRobotPose(state.Pose);
@@ -140,6 +151,26 @@ public class Telemetry {
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");
         fieldPub.set(m_poseArray);
+
+        /* Calculate and telemeterize max accelerations */
+        double deltaVx = state.Speeds.vxMetersPerSecond - prevVx;
+        double deltaVy = state.Speeds.vyMetersPerSecond - prevVy;
+
+        double currentAccel = Math.hypot(deltaVx, deltaVy) / state.OdometryPeriod;
+        maxAccel = Math.max(maxAccel, currentAccel);
+
+        prevVx = state.Speeds.vxMetersPerSecond;
+        prevVy = state.Speeds.vyMetersPerSecond;
+
+        SmartDashboard.putNumber("Max Accel", maxAccel);
+
+        double currentOmega = state.Speeds.omegaRadiansPerSecond;
+        double angularAccel = Math.abs(currentOmega - prevOmega) / state.OdometryPeriod;
+
+        maxAngularAccel = Math.max(maxAngularAccel, angularAccel);
+        prevOmega = currentOmega;
+
+        SmartDashboard.putNumber("Max Angular Accel", maxAngularAccel);
 
         /* Telemeterize each module state to a Mechanism2d */
         for (int i = 0; i < 4; ++i) {

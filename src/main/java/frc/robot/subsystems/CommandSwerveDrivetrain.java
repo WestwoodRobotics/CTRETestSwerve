@@ -34,6 +34,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.LimelightTarget_Classifier;
+import frc.robot.LimelightHelpers.LimelightTarget_Detector;
 import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -287,14 +289,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("limelight");
         var llResult = LimelightHelpers.getLatestResults("limelight");
-        if(llResult != null && llResult.valid && llResult.botpose_tagcount > 1){
+        if(llResult != null && llResult.valid && llResult.botpose_tagcount > 0 && fiducials.length > 0){
         
             double[] distances = {
-                fiducials[0].distToCamera,
-                fiducials[1].distToCamera
+                fiducials[0].distToCamera
+                /*,fiducials[1].distToCamera*/
             };
+
+
+            double ambiguity = fiducials[0].ambiguity;
+            SmartDashboard.putNumber("limelight ambiguity", ambiguity);
+
+            double ta = fiducials[0].ta;
+            SmartDashboard.putNumber("ta", ta);
             //greater than 0.75 meters and less than 2 meters
-            if (distances[0] > 0.75 && distances[1] > 0.75 && distances[0] < 2 && distances[1] < 2){
+            if ((distances[0] > 0.75) && (distances[0] < 2) && ambiguity < 0.7 && ta > 0){
                 Pose2d llPose = LimelightHelpers.getBotPose2d_wpiBlue("limelight");
                 double llTimestamp = Timer.getFPGATimestamp() - (llResult.latency_pipeline / 1000.0) - (llResult.latency_capture/ 1000.0);
                 addVisionMeasurement(llPose, llTimestamp);
@@ -310,8 +319,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("number of limelights", llResult.botpose_tagcount);
         SmartDashboard.putBoolean("llresult valid", llResult.valid);
         SmartDashboard.putBoolean("llresult not null", llResult != null);
-        SmartDashboard.putNumber("llresult tagcount", llResult.botpose_tagcount);
-    }
+
+      }
 
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();

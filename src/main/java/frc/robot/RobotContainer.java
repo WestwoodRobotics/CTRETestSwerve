@@ -126,7 +126,12 @@ public class RobotContainer {
         joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        //dpad up to turn on candle
+        // drive forward at full speed on dpad up
+        joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 
+            drive.withVelocityX(-MaxSpeed)
+        ));
+
+        //dpad right to turn on candle
         joystick.povRight().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))))
         .onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
         // reset the field-centric heading on left bumper press
