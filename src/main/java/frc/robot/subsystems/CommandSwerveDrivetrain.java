@@ -303,7 +303,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             double ta = fiducials[0].ta;
             SmartDashboard.putNumber("ta", ta);
             //greater than 0.75 meters and less than 2 meters
-            if ((distances[0] > 0.75) && (distances[0] < 2) && ambiguity < 0.7 && ta > 0){
+            if ((distances[0] > 0.75) && (distances[0] < 2) && ambiguity < 0.7 && ta < 100){
                 Pose2d llPose = LimelightHelpers.getBotPose2d_wpiBlue("limelight");
                 double llTimestamp = Timer.getFPGATimestamp() - (llResult.latency_pipeline / 1000.0) - (llResult.latency_capture/ 1000.0);
                 addVisionMeasurement(llPose, llTimestamp);

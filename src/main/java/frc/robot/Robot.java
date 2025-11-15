@@ -21,7 +21,6 @@ public class Robot extends TimedRobot {
   }
   @Override
   public void robotInit() {
-
     try{
      
       m_robotContainer.music.schedule();
@@ -29,6 +28,7 @@ public class Robot extends TimedRobot {
           System.out.println("Failed to play music" + e.getMessage());
           e.printStackTrace();
       }
+   
   }
   @Override
   public void robotPeriodic() {
@@ -64,6 +64,7 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+   
   }
 
   @Override
