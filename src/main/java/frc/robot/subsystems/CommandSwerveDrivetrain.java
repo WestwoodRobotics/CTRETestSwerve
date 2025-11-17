@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.LimelightResults;
 import frc.robot.LimelightHelpers.LimelightTarget_Classifier;
 import frc.robot.LimelightHelpers.LimelightTarget_Detector;
 import frc.robot.LimelightHelpers.RawFiducial;
@@ -287,13 +288,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-        RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("limelight");
-        var llResult = LimelightHelpers.getLatestResults("limelight");
+        /* RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("limelight");
+        LimelightResults llResult = LimelightHelpers.getLatestResults("limelight");
         if(llResult != null && llResult.valid && llResult.botpose_tagcount > 0 && fiducials.length > 0){
         
             double[] distances = {
                 fiducials[0].distToCamera
-                /*,fiducials[1].distToCamera*/
             };
 
 
@@ -319,7 +319,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("number of limelights", llResult.botpose_tagcount);
         SmartDashboard.putBoolean("llresult valid", llResult.valid);
         SmartDashboard.putBoolean("llresult not null", llResult != null);
-
+ */
       }
 
     private void startSimThread() {
@@ -335,6 +335,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
+    }
+
+
+    public double getLinearSpeedMetersPerSecond() {
+        return Math.hypot(getState().Speeds.vxMetersPerSecond, getState().Speeds.vyMetersPerSecond);
+    }
+
+    public double getOmegaRadPerSec(){
+        return getState().Speeds.omegaRadiansPerSecond;
     }
 
     /**
