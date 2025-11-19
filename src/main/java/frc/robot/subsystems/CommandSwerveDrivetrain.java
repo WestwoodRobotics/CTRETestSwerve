@@ -287,38 +287,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-        RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("limelight");
-        var llResult = LimelightHelpers.getLatestResults("limelight");
-        if(llResult != null && llResult.valid && llResult.botpose_tagcount > 0 && fiducials.length > 0){
         
-            double[] distances = {
-                fiducials[0].distToCamera
-                /*,fiducials[1].distToCamera*/
-            };
-
-
-            double ambiguity = fiducials[0].ambiguity;
-            SmartDashboard.putNumber("limelight ambiguity", ambiguity);
-
-            double ta = fiducials[0].ta;
-            SmartDashboard.putNumber("ta", ta);
-            //greater than 0.75 meters and less than 2 meters
-            if ((distances[0] > 0.75) && (distances[0] < 2) && ambiguity < 0.7 && ta < 100){
-                Pose2d llPose = LimelightHelpers.getBotPose2d_wpiBlue("limelight");
-                double llTimestamp = Timer.getFPGATimestamp() - (llResult.latency_pipeline / 1000.0) - (llResult.latency_capture/ 1000.0);
-                addVisionMeasurement(llPose, llTimestamp);
-                candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)));
-            } else{
-                candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)));
-            }
-
-            
-        } else {
-            candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)));
-        }
-        SmartDashboard.putNumber("number of limelights", llResult.botpose_tagcount);
-        SmartDashboard.putBoolean("llresult valid", llResult.valid);
-        SmartDashboard.putBoolean("llresult not null", llResult != null);
 
       }
 

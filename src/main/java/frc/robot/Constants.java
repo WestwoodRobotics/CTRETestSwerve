@@ -3,6 +3,8 @@ package frc.robot;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -10,6 +12,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -37,5 +41,20 @@ public final class Constants {
         
         public static final LinearVelocity kMaxVelocity = MetersPerSecond.of(3.0);
         public static final LinearAcceleration kMaxAcceleration = MetersPerSecondPerSecond.of(3.0);
+    }
+
+    public static final class LimelightConstants {
+        public static final String kName = "limelight";
+        public static final double kXyStdDev = 0.2;
+        public static final double kThetaStdDev = Math.toRadians(10);
+        public static final Matrix<N3, N1> kStdDevs = VecBuilder.fill(
+            kXyStdDev,
+            kXyStdDev,
+            kThetaStdDev);
+
+        public static final double kMaxAmbiguity = 0.2;
+        public static final double kMaxDistance = 3.0;
+        public static final int kMinTags = 1;
+        public static final int kPipelineIndex = 0;
     }
 }

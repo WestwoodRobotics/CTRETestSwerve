@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.subsystems.Limelight;
 
 public class Telemetry {
     private final double MaxSpeed;
@@ -32,7 +34,6 @@ public class Telemetry {
     private double maxAccel;
     private double prevOmega;
     private double maxAngularAccel;
-    private Pigeon2 pigeon;
 
     /**
      * Construct a telemetry object, with the specified max speed of the robot
@@ -41,7 +42,6 @@ public class Telemetry {
      */
     public Telemetry(double maxSpeed) {
         MaxSpeed = maxSpeed;
-        pigeon = new Pigeon2(2, "SwerveCAN");
         maxAccel = 0.0;
         prevOmega = 0.0;
         maxAngularAccel = 0.0;
@@ -136,18 +136,7 @@ public class Telemetry {
         SmartDashboard.putNumber("Robot Pose Rotation", state.Pose.getRotation().getDegrees());
         field.setRobotPose(state.Pose);
         SmartDashboard.putData("Field", field);
-        /* LimelightHelpers.setPipelineIndex("limelight", 1);
-        SmartDashboard.putNumber("Limelight TX", LimelightHelpers.getTX("limelight"));
-        SmartDashboard.putNumber("Limelight TA", LimelightHelpers.getTA("limelight"));
-        SmartDashboard.putNumber("Limelight TY", LimelightHelpers.getTX("limelight"));
-        SmartDashboard.putBoolean("Limelight TV", LimelightHelpers.getTV("limelight")); */
-         LimelightHelpers.setPipelineIndex("limelight" , 0);
-        SmartDashboard.putNumber("Limelight pose X", LimelightHelpers.getBotPose2d("limelight").getX());
-        SmartDashboard.putNumber("Limelight pose Y", LimelightHelpers.getBotPose2d("limelight").getY());
-        SmartDashboard.putNumber("Limelight heading", LimelightHelpers.getBotPose2d("limelight").getRotation().getDegrees()); 
-        SmartDashboard.putBoolean("Limelight TV", LimelightHelpers.getTV("limelight")); 
-
-
+        Shuffleboard.getTab("Tab 3").add("Field", field);
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");
         fieldPub.set(m_poseArray);
