@@ -38,11 +38,12 @@ public class Limelight extends SubsystemBase{
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
       
-        if(llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials.length == 1) {
+        if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
             hasValidTarget = true;
             tags = llResult.tagCount;
+            SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);
 
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
                 && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
@@ -62,7 +63,6 @@ public class Limelight extends SubsystemBase{
         }
 
         SmartDashboard.putNumber("LL tag count", tags);
-        SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);
         SmartDashboard.putBoolean("LL has target", hasValidTarget);
         SmartDashboard.putNumber("LL Estimated Pose X", llPose.getX());
         SmartDashboard.putNumber("LL Estimated Pose Y", llPose.getY());

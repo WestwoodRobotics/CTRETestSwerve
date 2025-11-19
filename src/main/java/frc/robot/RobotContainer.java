@@ -33,6 +33,7 @@ import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Limelight;
+import frc.robot.subsystems.LimelightSubsystem;
 import edu.wpi.first.wpilibj.util.Color;
 
 
@@ -55,12 +56,12 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     public CANdle candle = new CANdle(50, "SwerveCAN");
+    private final LimelightSubsystem limelight = new LimelightSubsystem("limelight", drivetrain, candle);
 
     private final SendableChooser<Command> autoChooser;
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
 
-    private Limelight limelight = new Limelight(drivetrain, candle);
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
