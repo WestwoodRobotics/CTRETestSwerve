@@ -38,4 +38,9 @@ public final class Constants {
         public static final LinearVelocity kMaxVelocity = MetersPerSecond.of(3.0);
         public static final LinearAcceleration kMaxAcceleration = MetersPerSecondPerSecond.of(3.0);
     }
+
+    public static final class CandleConstants {
+        public static final int startIndex = 0;
+        public static final int endIndex = 26;
+    }
 }
