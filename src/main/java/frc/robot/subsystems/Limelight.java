@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
@@ -15,14 +17,15 @@ import frc.robot.Constants.LimelightConstants;
 public class Limelight extends SubsystemBase{
     
     private CommandSwerveDrivetrain drivetrain;
-    private CANdle candle;
+    private LED candle;
 
     private boolean hasValidTarget;
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
     private int tags;
+    private BooleanSupplier isButtonPressed;
 
-    public Limelight(CommandSwerveDrivetrain drivetrain, CANdle candle){
+    public Limelight(CommandSwerveDrivetrain drivetrain, LED candle, BooleanSupplier isbuttonpressed){
         this.drivetrain = drivetrain;
         this.candle = candle;
 
@@ -37,13 +40,13 @@ public class Limelight extends SubsystemBase{
     public void periodic(){
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
-      
-        if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials.length > 0 ) {
+        hasValidTarget = false;
+        if(llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
             hasValidTarget = true;
             tags = llResult.tagCount;
-            SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);
+
 
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
                 && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
@@ -56,17 +59,22 @@ public class Limelight extends SubsystemBase{
         }
 
         if (hasValidTarget) {
-            candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)));
+            candle.setSolidColor(Color.kOrange, 1);;
         }
         else {
-            candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)));
+            candle.clearColor();
         }
 
         SmartDashboard.putNumber("LL tag count", tags);
         SmartDashboard.putBoolean("LL has target", hasValidTarget);
-        SmartDashboard.putNumber("LL Estimated Pose X", llPose.getX());
-        SmartDashboard.putNumber("LL Estimated Pose Y", llPose.getY());
-        SmartDashboard.putNumber("LL Estimated Pose Theta", llPose.getRotation().getDegrees());
+
+        if(llResult != null && llResult.rawFiducials != null && llResult.rawFiducials.length == 1) {
+            SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);
+            SmartDashboard.putNumber("LL Estimated Pose X", llPose.getX());
+            SmartDashboard.putNumber("LL Estimated Pose Y", llPose.getY());
+            SmartDashboard.putNumber("LL Estimated Pose Theta", llPose.getRotation().getDegrees());
+        }
+       
     }
 
     public boolean hasValidTarget(){

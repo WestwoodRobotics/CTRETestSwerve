@@ -32,6 +32,7 @@ import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.LED;
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.LimelightSubsystem;
 import edu.wpi.first.wpilibj.util.Color;
@@ -55,29 +56,19 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    public CANdle candle = new CANdle(50, "SwerveCAN");
-    private final LimelightSubsystem limelight = new LimelightSubsystem("limelight", drivetrain, candle);
-
+    //public CANdle candle = new CANdle(50, "SwerveCAN");
+    public LED led = new LED(50, "SwerveCAN");
     private final SendableChooser<Command> autoChooser;
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
 
+    private Limelight limelight = new Limelight(drivetrain, led, () -> joystick.povRight().getAsBoolean());
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
 
         
-        CANdleConfiguration cfg = new CANdleConfiguration();
-        cfg.LED.BrightnessScalar = 1.0;
-        cfg.LED.StripType = StripTypeValue.GRB;
-
-        candle.getConfigurator().apply(cfg);
         
-        for (int i = 0; i < 8; i++){
-            candle.setControl(new EmptyAnimation(i));
-        }
-
-        drivetrain.setCANdle(candle);
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -136,8 +127,8 @@ public class RobotContainer {
         ));
 
         //dpad right to turn on candle
-        joystick.povRight().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))))
-        .onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
+        joystick.povRight().onTrue(new InstantCommand(() -> led.setSolidColor(Color.kBlue, 1)))
+        .onFalse(new InstantCommand (() -> led.clearColor()));
         // reset the field-centric heading on left bumper press
          joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
          joystick.povLeft().whileTrue(music);
