@@ -42,5 +42,7 @@ public final class Constants {
     public static final class CandleConstants {
         public static final int startIndex = 0;
         public static final int endIndex = 26;
+
+        public static final int id = 50;
     }
 }
