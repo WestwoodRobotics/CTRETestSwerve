@@ -15,15 +15,18 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+  //private final RobotContainerMaintainPointing m_robotContainerMaintainPointing;
 
   public Robot() {
     m_robotContainer = new RobotContainer();
+    //m_robotContainerMaintainPointing = new RobotContainerMaintainPointing();
   }
   @Override
   public void robotInit() {
     try{
      
       m_robotContainer.music.schedule();
+      //m_robotContainerMaintainPointing.music.schedule();
       } catch (Exception e){
           System.out.println("Failed to play music" + e.getMessage());
           e.printStackTrace();
@@ -47,6 +50,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+   // m_autonomousCommand = m_robotContainerMaintainPointing.getAutonomousCommand();
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();

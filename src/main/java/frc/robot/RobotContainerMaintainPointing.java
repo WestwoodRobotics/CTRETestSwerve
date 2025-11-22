@@ -18,6 +18,7 @@ import com.ctre.phoenix6.signals.StripTypeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Joystick;
@@ -37,7 +38,7 @@ import edu.wpi.first.wpilibj.util.Color;
 
 
 
-public class RobotContainer {
+public class RobotContainerMaintainPointing {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     public Orchestra orchestra = new Orchestra();
@@ -58,6 +59,8 @@ public class RobotContainer {
 
     private final SendableChooser<Command> autoChooser;
     
+    public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
+
     private Translation2d currentPose;
     private Translation2d lastPose;
     private Translation2d targetPose;
@@ -65,10 +68,9 @@ public class RobotContainer {
     private double distance1;
     private double distance2;
     private double angleDelta;
+    private double kP = 0.1;
 
-    public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
-
-    public RobotContainer() {
+    public RobotContainerMaintainPointing() {
         autoChooser = AutoBuilder.buildAutoChooser();
 
         
@@ -88,14 +90,14 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        // Note that X is defined as forward according to WPILib convention,
-        // and Y is defined as to the left according to WPILib convention.
         currentPose = new Translation2d();
         lastPose = new Translation2d();
         targetPose = new Translation2d(10,10);
 
         lastPose = drivetrain.getState().Pose.getTranslation();
 
+        // Note that X is defined as forward according to WPILib convention,
+        // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() -> {
@@ -104,23 +106,34 @@ public class RobotContainer {
                         Math.pow(joystick.getLeftX(), 2) 
                         + Math.pow(joystick.getLeftY(), 2)
                     );
-                    
+                    currentPose = drivetrain.getState().Pose.getTranslation();
+
+                    distance1 = Math.sqrt((targetPose.getX() - lastPose.getX())*(targetPose.getX() - lastPose.getX()) + (targetPose.getY() - lastPose.getY())*(targetPose.getY() - lastPose.getY()));
+
+                    distance2 = Math.sqrt((currentPose.getX() - lastPose.getX())*(currentPose.getX() - lastPose.getX()) + (currentPose.getY() - lastPose.getY())*(currentPose.getY() - lastPose.getY()));
+
+                    angleDelta = Math.toDegrees(Math.atan2(distance2, distance1));
+
 
                     double angle = Math.atan2(joystick.getLeftY(), joystick.getLeftX()); // angle of joystick
                     double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
                     double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
 
+                    lastPose = currentPose;
+
                     return drive.withVelocityX(-(yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
                     .withVelocityY(-(xMagnitude) * MaxSpeed) // Drive left with squared X (maintaining sign)
-                    .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
+                    .withRotationalRate((-angleDelta * kP) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
                 }  
             )
         );
 
+    
+
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
-
+        
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
