@@ -19,7 +19,6 @@ public class Limelight extends SubsystemBase{
     private CommandSwerveDrivetrain drivetrain;
     private LED candle;
 
-    private boolean hasValidTarget;
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
     private int tags;
@@ -28,7 +27,6 @@ public class Limelight extends SubsystemBase{
         this.drivetrain = drivetrain;
         this.candle = candle;
 
-        hasValidTarget = false;
         llPose = new Pose2d();
         llResult = new LimelightHelpers.PoseEstimate();
         tags = 0;
@@ -39,13 +37,11 @@ public class Limelight extends SubsystemBase{
     public void periodic(){
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
-        hasValidTarget = false;
-         tags = llResult.tagCount;
+        tags = llResult.tagCount;
 
         if(llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
-            hasValidTarget = true;
 
 
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
@@ -58,7 +54,7 @@ public class Limelight extends SubsystemBase{
             }
         }
 
-        if (hasValidTarget) {
+        if (hasValidTarget()){
             candle.setSolidColor(Color.kOrange, 1);;
         }
         else {
@@ -66,7 +62,7 @@ public class Limelight extends SubsystemBase{
         }
 
         SmartDashboard.putNumber("LL tag count", tags);
-        SmartDashboard.putBoolean("LL has target", hasValidTarget);
+        SmartDashboard.putBoolean("LL has target", hasValidTarget());
 
 
         if(llResult != null && llResult.rawFiducials != null && llResult.rawFiducials.length == 1) {
@@ -79,7 +75,7 @@ public class Limelight extends SubsystemBase{
     }
 
     public boolean hasValidTarget(){
-        return hasValidTarget;
+        return (llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0);
     }
     public int getNumTag() {
         return tags;

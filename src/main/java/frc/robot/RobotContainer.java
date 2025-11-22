@@ -18,7 +18,10 @@ import com.ctre.phoenix6.signals.StripTypeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -28,8 +31,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
+import frc.robot.commands.swerve.lockToCenter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
@@ -48,6 +53,14 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    private final SwerveRequest.FieldCentricFacingAngle faceCenter = 
+        new SwerveRequest.FieldCentricFacingAngle()
+        .withDeadband(MaxSpeed*0.1)
+        .withRotationalDeadband(MaxAngularRate*0.1)
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+        .withTargetDirection(new Rotation2d());
+    
+        
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     
@@ -66,8 +79,9 @@ public class RobotContainer {
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
 
-        
-        
+        faceCenter.HeadingController.setPID(5, 0, 0.1);
+        faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
+
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -76,6 +90,7 @@ public class RobotContainer {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
+
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() -> {
                     //distance formula
@@ -87,7 +102,7 @@ public class RobotContainer {
                     double angle = Math.atan2(joystick.getLeftY(), joystick.getLeftX()); // angle of joystick
                     double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
                     double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
-
+                    
                     return drive.withVelocityX(-(yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
                     .withVelocityY(-(xMagnitude) * MaxSpeed) // Drive left with squared X (maintaining sign)
                     .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
@@ -111,15 +126,17 @@ public class RobotContainer {
         
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        /* joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
+ */
         // reset the field-centric heading on left bumper press
         joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
+
+        joystick.y().whileTrue(new lockToCenter(drivetrain, faceCenter));
         // drive forward at full speed on dpad up
         joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 
             drive.withVelocityX(-MaxSpeed)
