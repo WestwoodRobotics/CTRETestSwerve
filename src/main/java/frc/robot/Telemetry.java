@@ -136,9 +136,7 @@ public class Telemetry {
         SmartDashboard.putNumber("Robot Pose Rotation", state.Pose.getRotation().getDegrees());
         field.setRobotPose(state.Pose);
         SmartDashboard.putData("Field", field);
-        Shuffleboard.getTab("Field tab").add("Field", field);
-        Shuffleboard.getTab("Field tab").add("Robot Pose X", state.Pose.getX());
-        Shuffleboard.getTab("Field tab").add("Robot Pose Y", state.Pose.getY());
+    
 
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");
