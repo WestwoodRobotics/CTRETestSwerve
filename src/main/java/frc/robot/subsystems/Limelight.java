@@ -23,9 +23,8 @@ public class Limelight extends SubsystemBase{
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
     private int tags;
-    private BooleanSupplier isButtonPressed;
 
-    public Limelight(CommandSwerveDrivetrain drivetrain, LED candle, BooleanSupplier isbuttonpressed){
+    public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
         this.candle = candle;
 
@@ -41,19 +40,20 @@ public class Limelight extends SubsystemBase{
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
         hasValidTarget = false;
+         tags = llResult.tagCount;
+
         if(llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
             hasValidTarget = true;
-            tags = llResult.tagCount;
 
 
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
                 && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
                 drivetrain.addVisionMeasurement(
                     llPose,
-                    llResult.timestampSeconds,
-                    LimelightConstants.kStdDevs);
+                    llResult.timestampSeconds
+                    );
 
             }
         }
@@ -67,6 +67,7 @@ public class Limelight extends SubsystemBase{
 
         SmartDashboard.putNumber("LL tag count", tags);
         SmartDashboard.putBoolean("LL has target", hasValidTarget);
+
 
         if(llResult != null && llResult.rawFiducials != null && llResult.rawFiducials.length == 1) {
             SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);

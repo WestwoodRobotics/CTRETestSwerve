@@ -34,7 +34,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
 import frc.robot.subsystems.Limelight;
-import frc.robot.subsystems.LimelightSubsystem;
 import edu.wpi.first.wpilibj.util.Color;
 
 
@@ -62,7 +61,7 @@ public class RobotContainer {
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
 
-    private Limelight limelight = new Limelight(drivetrain, led, () -> joystick.povRight().getAsBoolean());
+    private Limelight limelight = new Limelight(drivetrain, led);
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
