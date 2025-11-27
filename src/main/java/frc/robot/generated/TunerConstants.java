@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.*;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.*;
 import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.swerve.*;
@@ -38,7 +39,7 @@ public class TunerConstants {
     private static final ClosedLoopOutputType kSteerClosedLoopOutput = ClosedLoopOutputType.Voltage;
     // The closed-loop output type to use for the drive motors;
     // This affects the PID/FF gains for the drive motors
-    private static final ClosedLoopOutputType kDriveClosedLoopOutput = ClosedLoopOutputType.Voltage;
+    private static final ClosedLoopOutputType kDriveClosedLoopOutput = ClosedLoopOutputType.TorqueCurrentFOC;
 
     // The type of motor used for the drive motor
     private static final DriveMotorArrangement kDriveMotorType = DriveMotorArrangement.TalonFX_Integrated;
@@ -55,7 +56,14 @@ public class TunerConstants {
 
     // Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
     // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
-    private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
+    private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration()
+     .withClosedLoopRamps(
+        new ClosedLoopRampsConfigs()
+            .withTorqueClosedLoopRampPeriod(Seconds.of(0.02))
+     )
+
+   
+    ;
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
         .withCurrentLimits(
             new CurrentLimitsConfigs()
