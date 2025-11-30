@@ -17,18 +17,18 @@ public class Arm extends SubsystemBase {
         armMotor = new TalonFX(0, "SwerveCAN"); // Replace 0 with the actual CAN ID
 
         configs = new Slot0Configs();
-        configs.kP = 0.0;
+        configs.kP = 1.0;
         configs.kI = 0.0;
-        configs.kD = 0.0;
+        configs.kD = 0.1;
         configs.kS = 0.0;
         configs.kV = 0.0;
         configs.kG = 0.0;
         armMotor.getConfigurator().apply(configs);
 
         motionMagicConfigs = new MotionMagicConfigs();
-        motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Set appropriate cruise velocity
-        motionMagicConfigs.MotionMagicAcceleration = 160; // Set appropriate acceleration
-        
+        motionMagicConfigs.MotionMagicCruiseVelocity = 15; // Set appropriate cruise velocity
+        motionMagicConfigs.MotionMagicAcceleration = 80; // Set appropriate acceleration
+
         armMotor.getConfigurator().apply(motionMagicConfigs);
         
 
