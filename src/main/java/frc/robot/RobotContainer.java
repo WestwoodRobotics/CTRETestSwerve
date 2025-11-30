@@ -31,7 +31,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.utils.armPositions;
 import edu.wpi.first.wpilibj.util.Color;
 
 
@@ -46,9 +48,8 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-
+    private Arm arm = new Arm();
     private final Telemetry logger = new Telemetry(MaxSpeed);
-    
     private final CommandXboxController joystick = new CommandXboxController(0);
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
@@ -137,6 +138,7 @@ public class RobotContainer {
         // reset the field-centric heading on left bumper press
          joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
          joystick.povLeft().whileTrue(music);
+         joystick.povUp().onTrue(new InstantCommand(() -> arm.setArmPosition(armPositions.HIGH.getPosition())));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
