@@ -60,9 +60,7 @@ public class FollowTrajectory extends Command{
             TrajectoryConstants.kMaxVelocity,
             TrajectoryConstants.kMaxAcceleration);
 
-        List<Pose2d> waypoints = List.of(start, end);
-
-        return TrajectoryGenerator.generateTrajectory(waypoints, config);
+        return TrajectoryGenerator.generateTrajectory(start, List.of(), end, config);
     }
 
     @Override
@@ -73,7 +71,7 @@ public class FollowTrajectory extends Command{
         Trajectory.State desiredState = trajectory.sample(currentTime);
 
 
-        ChassisSpeeds outputs = controller.calculate(currentPose, desiredState, currentPose.getRotation());
+        ChassisSpeeds outputs = controller.calculate(currentPose, desiredState, desiredState.poseMeters.getRotation());
 
         drivetrain.setControl(
             new SwerveRequest.ApplyRobotSpeeds().withSpeeds(outputs)
