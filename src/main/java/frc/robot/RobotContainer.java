@@ -52,7 +52,6 @@ public class RobotContainer {
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
     private final SwerveRequest.FieldCentricFacingAngle faceCenter = 
         new SwerveRequest.FieldCentricFacingAngle()
         .withDeadband(MaxSpeed*0.1)
@@ -79,9 +78,9 @@ public class RobotContainer {
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
 
-        faceCenter.HeadingController.setPID(5, 0, 0.1);
+        faceCenter.HeadingController.setPID(TrajectoryConstants.RotationalkP, TrajectoryConstants.RotationalkI, TrajectoryConstants.RotationalkD);
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
-
+        
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -117,9 +116,7 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-        point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
+        
 
         // Zero drivetrain heading on left joystick press
         joystick.rightStick().onFalse(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));

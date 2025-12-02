@@ -41,7 +41,14 @@ public final class Constants {
         
         public static final LinearVelocity kMaxVelocity = MetersPerSecond.of(3.0);
         public static final LinearAcceleration kMaxAcceleration = MetersPerSecondPerSecond.of(3.0);
+
+        public static final double RotationalkP = 5;
+        public static final double RotationalkI = 0;
+        public static final double RotationalkD = 0.1;
+
     }
+
+    
 
     public static final class LimelightConstants {
         public static final String kName = "limelight";
