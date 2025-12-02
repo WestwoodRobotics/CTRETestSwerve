@@ -15,13 +15,11 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 public class Candle {
     
     private CANdle candle;
-    private CommandSwerveDrivetrain drivetrain;
     CANdleConfiguration cfg;
 
     public Candle(int deviceId, CANBus canbus, CommandSwerveDrivetrain drivetrain) {
 
         this.candle = new CANdle(deviceId, canbus);
-        this.drivetrain = drivetrain;
 
         cfg = new CANdleConfiguration();
         cfg.LED.BrightnessScalar = 1.0;
