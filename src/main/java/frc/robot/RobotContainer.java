@@ -28,9 +28,11 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.ArmConstants;
 import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import edu.wpi.first.wpilibj.util.Color;
 
@@ -54,6 +56,8 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     public CANdle candle = new CANdle(50, "SwerveCAN");
+
+    public Arm arm = new Arm(ArmConstants.kArmMotorId, "SwerveCAN");
 
     private final SendableChooser<Command> autoChooser;
     
@@ -94,9 +98,9 @@ public class RobotContainer {
                     double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
                     double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
 
-                    return drive.withVelocityX(-(yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
-                    .withVelocityY(-(xMagnitude) * MaxSpeed) // Drive left with squared X (maintaining sign)
-                    .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
+                    return drive.withVelocityX(0) // Drive forward with squared Y (maintaining sign)
+                    .withVelocityY(0) // Drive left with squared X (maintaining sign)
+                    .withRotationalRate(0); // Drive counterclockwise with squared X (maintaining sign)
                 }  
             )
         );
@@ -117,23 +121,37 @@ public class RobotContainer {
         
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        joystick.back().and(joystick.y()).whileTrue(
+            arm.sysIdDynamic(Direction.kForward).andThen(() -> arm.sysIdDynamic(Direction.kReverse).schedule())
+        );
+        joystick.start().and(joystick.y()).whileTrue(arm.sysIdQuasistatic(Direction.kForward));
+        joystick.start().and(joystick.x()).whileTrue(arm.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
         joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         // drive forward at full speed on dpad up
-        joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 
-            drive.withVelocityX(-MaxSpeed)
-        ));
+        // joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 
+        //     drive.withVelocityX(-MaxSpeed)
+        // ));
+
+        // Set arm to max position on dpad right
+        joystick.povRight().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMaxPositionRotations)));
+        // Set arm to min position on dpad left
+        joystick.povLeft().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMinPositionRotations)));
+
+        // Set voltage to 1 volt on right trigger
+        joystick.rightTrigger().whileTrue(arm.runOnce(() -> arm.setVoltage(1.0)))
+        .onFalse(arm.runOnce(() -> arm.setVoltage(0.0)));
+        // Set voltage to -1 volt on left trigger
+        joystick.leftTrigger().whileTrue(arm.runOnce(() -> arm.setVoltage(-1.0)))
+        .onFalse(arm.runOnce(() -> arm.setVoltage(0.0)));
+        
 
         //dpad right to turn on candle
-        joystick.povRight().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))))
-        .onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
+        //joystick.povRight().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))))
+        //.onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
         // reset the field-centric heading on left bumper press
          joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
          joystick.povLeft().whileTrue(music);
