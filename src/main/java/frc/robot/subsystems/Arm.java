@@ -10,6 +10,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -23,6 +25,8 @@ public class Arm extends SubsystemBase{
     private final MotionMagicTorqueCurrentFOC motionMagic;
     private final VoltageOut voltageControl;
     private final SysIdRoutine sysIdRoutine;
+
+    private final ShuffleboardTab tab = Shuffleboard.getTab("Arm");
     
 
     public Arm(int deviceId, String canBus) {
@@ -78,7 +82,9 @@ public class Arm extends SubsystemBase{
     }
 
     public void periodic() {
-        SmartDashboard.putNumber("Arm position rotations", motor.getPosition().getValueAsDouble());
+        tab.add("position rotations", motor.getPosition().getValueAsDouble());
+        tab.add("max acceleration", motor.getAcceleration().getValueAsDouble());
+        tab.add("max velocity", motor.getVelocity().getValueAsDouble());
     }
 
     public void setPosition(double positionRotations) {
