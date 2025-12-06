@@ -12,6 +12,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.ArmConstants;
@@ -22,6 +23,7 @@ public class Arm extends SubsystemBase{
     private final MotionMagicTorqueCurrentFOC motionMagic;
     private final VoltageOut voltageControl;
     private final SysIdRoutine sysIdRoutine;
+    
 
     public Arm(int deviceId, String canBus) {
 
@@ -49,21 +51,23 @@ public class Arm extends SubsystemBase{
 
         motor.getConfigurator().apply(configs);
 
+        motor.setPosition(ArmConstants.kZeroOffsetRotations);
+
         motor.getPosition().setUpdateFrequency(100);
         motor.getVelocity().setUpdateFrequency(100);
         motor.getMotorVoltage().setUpdateFrequency(50.0);
         motor.optimizeBusUtilization();
 
-        motionMagic = new MotionMagicTorqueCurrentFOC(0);
+        motionMagic = new MotionMagicTorqueCurrentFOC(ArmConstants.kZeroOffsetRotations);
         voltageControl = new VoltageOut(0).withEnableFOC(true);
 
         sysIdRoutine = new SysIdRoutine(
         new SysIdRoutine.Config(
-            Volts.of(0.5).per(Second),        // Use default ramp rate (1 V/s)
+            Volts.of(0.25).per(Second),        // Use default ramp rate (1 V/s)
             Volts.of(1), // Reduce dynamic step voltage to 4 V to prevent brownout
             null,        // Use default timeout (10 s)
             // Log state with SignalLogger class
-            state -> SignalLogger.writeString("SysIdArm_state", state.toString())
+            (state) -> SignalLogger.writeString("SysIdArm_state", state.toString())
         ),
         new SysIdRoutine.Mechanism(
            (Voltage volts) -> motor.setVoltage(volts.in(Volts)),
@@ -83,7 +87,7 @@ public class Arm extends SubsystemBase{
         } else if(positionRotations > ArmConstants.kMaxPositionRotations) {
             positionRotations = ArmConstants.kMaxPositionRotations;
         }
-        motor.setControl(motionMagic.withPosition(positionRotations - ArmConstants.kZeroOffsetRotations));
+        motor.setControl(motionMagic.withPosition(positionRotations));
     }
 
     public double getPosition() {
@@ -99,14 +103,11 @@ public class Arm extends SubsystemBase{
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.quasistatic(direction)
-        .until(() -> this.getPosition() >= ArmConstants.kMaxPositionRotations ||
-                      this.getPosition() <= ArmConstants.kMinPositionRotations);
+        return sysIdRoutine.quasistatic(direction);
+        
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.dynamic(direction)
-        .until(() -> this.getPosition() >= ArmConstants.kMaxPositionRotations ||
-                      this.getPosition() <= ArmConstants.kMinPositionRotations);
+        return sysIdRoutine.dynamic(direction);
     }
 }

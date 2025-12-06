@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.CANdleConfiguration;
 import com.ctre.phoenix6.controls.ColorFlowAnimation;
 import com.ctre.phoenix6.controls.EmptyAnimation;
@@ -65,7 +66,6 @@ public class RobotContainer {
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
-
         
         CANdleConfiguration cfg = new CANdleConfiguration();
         cfg.LED.BrightnessScalar = 1.0;
@@ -107,28 +107,40 @@ public class RobotContainer {
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
-        final var idle = new SwerveRequest.Idle();
-        RobotModeTriggers.disabled().whileTrue(
-            drivetrain.applyRequest(() -> idle).ignoringDisable(true)
-        );
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-        point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
+        // final var idle = new SwerveRequest.Idle();
+        // RobotModeTriggers.disabled().whileTrue(
+        //     drivetrain.applyRequest(() -> idle).ignoringDisable(true)
+        // );
+        // joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        // joystick.b().whileTrue(drivetrain.applyRequest(() ->
+        // point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        // ));
 
         // Zero drivetrain heading on left joystick press
         joystick.rightStick().onFalse(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
         
+
+        joystick.leftBumper().onTrue(Commands.runOnce(SignalLogger::start));
+        joystick.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop));
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
         joystick.back().and(joystick.y()).whileTrue(
-            arm.sysIdDynamic(Direction.kForward).andThen(() -> arm.sysIdDynamic(Direction.kReverse).schedule())
+            arm.sysIdDynamic(Direction.kForward)
+        );
+        joystick.back().and(joystick.b()).whileTrue(
+            arm.sysIdDynamic(Direction.kReverse)
+        );
+        joystick.back().and(joystick.x()).whileTrue(
+            arm.sysIdQuasistatic(Direction.kForward)
+        );
+        joystick.back().and(joystick.a()).whileTrue(
+            arm.sysIdQuasistatic(Direction.kReverse)
         );
         joystick.start().and(joystick.y()).whileTrue(arm.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(arm.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
-        joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
+        //joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         // drive forward at full speed on dpad up
@@ -153,8 +165,8 @@ public class RobotContainer {
         //joystick.povRight().onTrue(new InstantCommand(() -> candle.setControl(new SolidColor(0,26).withColor(new RGBWColor(Color.kOrange).scaleBrightness(1)))))
         //.onFalse(new InstantCommand (() -> candle.setControl(new SolidColor(0, 26).withColor(new RGBWColor(new Color(0,0,0)).scaleBrightness(1)))));
         // reset the field-centric heading on left bumper press
-         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-         joystick.povLeft().whileTrue(music);
+         //joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+         //joystick.povLeft().whileTrue(music);
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
