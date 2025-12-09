@@ -9,6 +9,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -27,6 +28,8 @@ public class Arm extends SubsystemBase{
     private final SysIdRoutine sysIdRoutine;
 
     private final ShuffleboardTab tab = Shuffleboard.getTab("Arm");
+
+    private GenericEntry posEntry, velEntry, accelEntry;
     
 
     public Arm(int deviceId, String canBus) {
@@ -76,15 +79,18 @@ public class Arm extends SubsystemBase{
         new SysIdRoutine.Mechanism(
            (Voltage volts) -> motor.setVoltage(volts.in(Volts)),
            null,
-           this
-        )
-    );
+           this)
+        );
+
+        posEntry = tab.add("Position Rot", 0).getEntry();
+        velEntry = tab.add("Velocity", 0).getEntry();
+        accelEntry = tab.add("Acceleration", 0).getEntry();
     }
 
     public void periodic() {
-        tab.add("position rotations", motor.getPosition().getValueAsDouble());
-        tab.add("max acceleration", motor.getAcceleration().getValueAsDouble());
-        tab.add("max velocity", motor.getVelocity().getValueAsDouble());
+        posEntry.setDouble(motor.getPosition().getValueAsDouble());
+        velEntry.setDouble(motor.getVelocity().getValueAsDouble());
+        accelEntry.setDouble(motor.getAcceleration().getValueAsDouble());
     }
 
     public void setPosition(double positionRotations) {
@@ -109,11 +115,19 @@ public class Arm extends SubsystemBase{
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.quasistatic(direction);
+        return Commands.sequence(
+            Commands.runOnce(SignalLogger::start),
+            sysIdRoutine.quasistatic(direction),
+            Commands.runOnce(SignalLogger::start)
+        );
         
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.dynamic(direction);
+        return Commands.sequence(
+            Commands.runOnce(SignalLogger::start),
+            sysIdRoutine.dynamic(direction),
+            Commands.runOnce(SignalLogger::stop)
+        );
     }
 }
