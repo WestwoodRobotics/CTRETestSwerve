@@ -47,15 +47,20 @@ public class lockToCenter extends Command{
         double radiusUx = dx / radius;
         double radiusUy = dy / radius;
         
+        double angularRate = MaxAngularRate * input;
+        double tangentialSpeed = angularRate * radius;
         
-        double angular = input * MaxAngularRate;
-        double tangentialSpeed = angular * radius;
 
         double radiusSpeed = radiusinput * MaxSpeed;
-
-
+       
         double vx = tangentUx*tangentialSpeed + radiusUx*radiusSpeed;
         double vy = tangentUy*tangentialSpeed + radiusUy*radiusSpeed;
+        if(vx > MaxSpeed){
+            vx = MaxSpeed;
+        }
+        if(vy > MaxSpeed){
+            vy = MaxSpeed;
+        }
 
         SmartDashboard.putNumber("Target angle degrees", targetAngle.getDegrees());
         SmartDashboard.putNumber("Angle error degrees", targetAngle.minus(currentPose.getRotation()).getDegrees());

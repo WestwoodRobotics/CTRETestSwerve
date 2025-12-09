@@ -22,6 +22,7 @@ public class Limelight extends SubsystemBase{
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
     private int tags;
+    private boolean isOrange;
 
     public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
@@ -55,10 +56,16 @@ public class Limelight extends SubsystemBase{
         }
 
         if (hasValidTarget()){
-            candle.setSolidColor(Color.kOrange, 1);;
+            candle.setSolidColor(Color.kOrange, 1);
+            isOrange = true;
         }
         else {
-            candle.clearColor();
+            if(isOrange){
+                candle.clearColor();
+                isOrange = false;
+
+            }
+
         }
 
         SmartDashboard.putNumber("LL tag count", tags);
