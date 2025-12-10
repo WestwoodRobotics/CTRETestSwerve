@@ -52,13 +52,17 @@ public final class Constants {
 
         public static final double kGearRatio = 18.0; // Motor rotations to arm rotations
 
-        public static final double kS = 0.046499; // Static gain
-        public static final double kG = 0.29638; // Gravity gain
-        public static final double kV = 2.009; // Velocity gain
-        public static final double kA = 0.18252; // Acceleration gain
+        public static final double kS = 0.048315; // Static gain
+        public static final double kG = 0.29367; // Gravity gain
+        public static final double kV = 1.9937; // Velocity gain
+        public static final double kA = 0.16936; // Acceleration gain
 
-        public static final double kP = 0.2; // Proportional gain
+        public static final double kP = 0.0; // Proportional gain
         public static final double kI = 0.0; // Integral gain
         public static final double kD = 0.0; // Derivative gain
+
+        public static final double kLow = -0.25;
+        public static final double kMid = 0.0;
+        public static final double kHigh = 0.25;
     }
 }

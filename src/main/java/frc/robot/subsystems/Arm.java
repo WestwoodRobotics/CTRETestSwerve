@@ -38,7 +38,7 @@ public class Arm extends SubsystemBase{
         TalonFXConfiguration configs = new TalonFXConfiguration();
 
         configs.MotionMagic.MotionMagicCruiseVelocity = 1;
-        configs.MotionMagic.MotionMagicAcceleration = 0.5;
+        configs.MotionMagic.MotionMagicAcceleration = 1;
 
         configs.Feedback.SensorToMechanismRatio = 18.0;
 
@@ -63,6 +63,7 @@ public class Arm extends SubsystemBase{
         motor.getPosition().setUpdateFrequency(100);
         motor.getVelocity().setUpdateFrequency(100);
         motor.getMotorVoltage().setUpdateFrequency(50.0);
+        motor.getAcceleration().setUpdateFrequency(100);
         motor.optimizeBusUtilization();
 
         motionMagic = new MotionMagicTorqueCurrentFOC(ArmConstants.kZeroOffsetRotations);
@@ -107,27 +108,19 @@ public class Arm extends SubsystemBase{
     }
 
     public void setVoltage(double volts) {
-        if((motor.getPosition().getValueAsDouble() >= ArmConstants.kMaxPositionRotations && volts > 0) || 
-           (motor.getPosition().getValueAsDouble() <= ArmConstants.kMinPositionRotations && volts < 0)) {
-            volts = 0.0; // Stop at limit
-        }
+        // if((motor.getPosition().getValueAsDouble() >= ArmConstants.kMaxPositionRotations && volts > 0) || 
+        //    (motor.getPosition().getValueAsDouble() <= ArmConstants.kMinPositionRotations && volts < 0)) {
+        //     volts = 0.0; // Stop at limit
+        // }
         motor.setControl(voltageControl.withOutput(volts));
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return Commands.sequence(
-            Commands.runOnce(SignalLogger::start),
-            sysIdRoutine.quasistatic(direction),
-            Commands.runOnce(SignalLogger::start)
-        );
+        return sysIdRoutine.quasistatic(direction);
         
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return Commands.sequence(
-            Commands.runOnce(SignalLogger::start),
-            sysIdRoutine.dynamic(direction),
-            Commands.runOnce(SignalLogger::stop)
-        );
+        return sysIdRoutine.dynamic(direction);
     }
 }

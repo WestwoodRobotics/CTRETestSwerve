@@ -136,8 +136,13 @@ public class RobotContainer {
         joystick.back().and(joystick.a()).whileTrue(
             arm.sysIdQuasistatic(Direction.kReverse)
         );
-        joystick.start().and(joystick.y()).whileTrue(arm.sysIdQuasistatic(Direction.kForward));
-        joystick.start().and(joystick.x()).whileTrue(arm.sysIdQuasistatic(Direction.kReverse));
+
+        // move to Low position on a button
+        joystick.a().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kLow)));
+        // move to Mid position on b button
+        joystick.b().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMid)));
+        // move to High position on y button
+        joystick.y().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMaxPositionRotations)));
 
         // reset the field-centric heading on left bumper press
         //joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
