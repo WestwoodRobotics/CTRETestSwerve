@@ -54,7 +54,7 @@ public class Limelight extends SubsystemBase{
 
             }
         }
-
+/* 
         if (hasValidTarget()){
             candle.setSolidColor(Color.kOrange, 1);
             isOrange = true;
@@ -67,7 +67,7 @@ public class Limelight extends SubsystemBase{
             }
 
         }
-
+ */
         SmartDashboard.putNumber("LL tag count", tags);
         SmartDashboard.putBoolean("LL has target", hasValidTarget());
 

@@ -16,7 +16,7 @@ public class LED extends SubsystemBase{
 
         CANdleConfiguration cfg = new CANdleConfiguration();
         cfg.LED.BrightnessScalar = 1.0;
-        cfg.LED.StripType = StripTypeValue.GRB;
+        cfg.LED.StripType = StripTypeValue.RGB;
 
         candle.getConfigurator().apply(cfg);
     }
