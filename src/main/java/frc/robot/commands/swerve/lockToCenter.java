@@ -55,11 +55,12 @@ public class lockToCenter extends Command{
        
         double vx = tangentUx*tangentialSpeed + radiusUx*radiusSpeed;
         double vy = tangentUy*tangentialSpeed + radiusUy*radiusSpeed;
-        if(vx > MaxSpeed){
-            vx = MaxSpeed;
-        }
-        if(vy > MaxSpeed){
-            vy = MaxSpeed;
+        double speed = Math.hypot(vx, vy);
+
+        if(speed > MaxSpeed){
+            double scale = MaxSpeed / speed;
+            vx *= scale;
+            vy *= scale;
         }
 
         SmartDashboard.putNumber("Target angle degrees", targetAngle.getDegrees());
