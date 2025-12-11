@@ -138,11 +138,11 @@ public class RobotContainer {
         );
 
         // move to Low position on a button
-        joystick.a().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kLow)));
+        joystick.a().onTrue(arm.runOnce(() -> arm.setPosition(ArmConstants.kLow)));
         // move to Mid position on b button
-        joystick.b().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMid)));
+        joystick.b().onTrue(arm.runOnce(() -> arm.setPosition(ArmConstants.kMid)));
         // move to High position on y button
-        joystick.y().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMaxPositionRotations)));
+        joystick.y().onTrue(arm.runOnce(() -> arm.setPosition(ArmConstants.kHigh)));
 
         // reset the field-centric heading on left bumper press
         //joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));

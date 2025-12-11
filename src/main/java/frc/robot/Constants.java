@@ -57,7 +57,7 @@ public final class Constants {
         public static final double kV = 1.9937; // Velocity gain
         public static final double kA = 0.16936; // Acceleration gain
 
-        public static final double kP = 0.0; // Proportional gain
+        public static final double kP = 10; // Proportional gain
         public static final double kI = 0.0; // Integral gain
         public static final double kD = 0.0; // Derivative gain
 

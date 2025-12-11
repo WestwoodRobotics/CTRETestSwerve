@@ -30,7 +30,7 @@ public class Arm extends SubsystemBase {
 
     private final ShuffleboardTab tab = Shuffleboard.getTab("Arm");
 
-    private GenericEntry posEntry, velEntry, accelEntry;
+    private GenericEntry posEntry, velEntry, accelEntry, isProLiscenced;
 
     /**
      * Creates an Arm subsystem with a TalonFX motor using magic motion profiling.
@@ -41,8 +41,7 @@ public class Arm extends SubsystemBase {
     public Arm(int motorId, String canbus) {
         this.motor = new TalonFX(motorId, canbus);
         this.magicTorqueRequest = new MotionMagicTorqueCurrentFOC(0)
-            .withSlot(0)
-            .withFeedForward(0);
+            .withSlot(0);
         this.magicVelocityRequest = new MotionMagicVelocityVoltage(0)
             .withSlot(0)
             .withEnableFOC(true);
@@ -63,6 +62,7 @@ public class Arm extends SubsystemBase {
         posEntry = tab.add("Position Rot", 0).getEntry();
         velEntry = tab.add("Velocity", 0).getEntry();
         accelEntry = tab.add("Acceleration", 0).getEntry();
+        isProLiscenced = tab.add("Pro Liscensed", false).getEntry();
     }
 
     private void configureMotor() {
@@ -177,6 +177,7 @@ public class Arm extends SubsystemBase {
         posEntry.setDouble(this.getPosition());
         velEntry.setDouble(this.getVelocity());
         accelEntry.setDouble(motor.getAcceleration().getValueAsDouble());
+        isProLiscenced.setBoolean(motor.getIsProLicensed().getValue());
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
