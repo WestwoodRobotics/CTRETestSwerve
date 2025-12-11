@@ -48,7 +48,7 @@ public final class Constants {
         public static final double kMaxPositionRotations = 0.3;
 
         public static final double kMMCruiseVelocity = 1.0; // rotations per second
-        public static final double kMMAcceleration = 0.5; // rotations per second squared
+        public static final double kMMAcceleration = 1.0; // rotations per second squared
 
         public static final double kGearRatio = 18.0; // Motor rotations to arm rotations
 

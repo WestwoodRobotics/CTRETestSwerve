@@ -132,7 +132,7 @@ public class Arm extends SubsystemBase {
             Math.min(Constants.ArmConstants.kMaxPositionRotations, positionRotations)
         );
 
-        motor.setControl(magicTorqueRequest.withPosition(clampedPosition));
+        motor.setControl(magicTorqueRequest.withPosition(positionRotations));
     }
 
     /**
