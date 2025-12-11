@@ -159,11 +159,11 @@ public class RobotContainer {
         joystick.povLeft().onTrue(new InstantCommand(() -> arm.setPosition(ArmConstants.kMinPositionRotations)));
 
         // Set voltage to 1 volt on right trigger
-        joystick.rightTrigger().whileTrue(arm.runOnce(() -> arm.setVoltage(1.0)))
-        .onFalse(arm.runOnce(() -> arm.setVoltage(0.0)));
+        joystick.rightTrigger().onTrue(arm.runOnce(() -> arm.setVelocity(0.2)))
+        .onFalse(arm.runOnce(() -> arm.setVelocity(0.0)));
         // Set voltage to -1 volt on left trigger
-        joystick.leftTrigger().whileTrue(arm.runOnce(() -> arm.setVoltage(-1.0)))
-        .onFalse(arm.runOnce(() -> arm.setVoltage(0.0)));
+        joystick.leftTrigger().onTrue(arm.runOnce(() -> arm.setVelocity(-0.2)))
+        .onFalse(arm.runOnce(() -> arm.setVelocity(0.0)));
         
 
         //dpad right to turn on candle
