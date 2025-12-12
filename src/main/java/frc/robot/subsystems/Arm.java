@@ -19,6 +19,9 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
@@ -51,10 +54,15 @@ public class Arm extends SubsystemBase {
 
         // Configure SysId routine
         this.sysIdRoutine = new SysIdRoutine(
-            new SysIdRoutine.Config(null, null, null, null),
+            new SysIdRoutine.Config(
+                Volts.of(0.25).per(Second),
+                Volts.of(1),
+                null,
+                (state) -> SignalLogger.writeString("arm_state", state.toString())
+            ),
             new SysIdRoutine.Mechanism(
-                voltage -> motor.setControl(voltageRequest.withOutput(voltage.in(edu.wpi.first.units.Units.Volts))),
-                (state) -> SignalLogger.writeString("arm_state", state.toString()),
+                volts -> motor.setControl(voltageRequest.withOutput(volts.in(Volts))),
+                null,
                 this
             )
         );
