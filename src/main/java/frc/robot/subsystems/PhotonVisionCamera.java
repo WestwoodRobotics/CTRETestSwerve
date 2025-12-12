@@ -2,6 +2,9 @@ package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
 
+import org.photonvision.PhotonCamera;
+import org.photonvision.targeting.PhotonPipelineResult;
+
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
@@ -14,22 +17,25 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.Constants.LimelightConstants;
 
-public class Limelight extends SubsystemBase{
+public class PhotonVisionCamera extends SubsystemBase{
     
     private CommandSwerveDrivetrain drivetrain;
     private LED candle;
 
     private Pose2d llPose;
-    private LimelightHelpers.PoseEstimate llResult;
+    private PhotonCamera cameraOne;    
+    private PhotonPipelineResult PVresult;
+
+
     private int tags;
     private boolean isOrange;
 
-    public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
+    public PhotonVisionCamera(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
         this.candle = candle;
 
         llPose = new Pose2d();
-        llResult = new LimelightHelpers.PoseEstimate();
+        PVresult = new LimelightHelpers.PoseEstimate();
         tags = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
     }
