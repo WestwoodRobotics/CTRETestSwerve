@@ -6,6 +6,10 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.io.IOException;
+
+import org.photonvision.proto.Photon;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.configs.CANdleConfiguration;
@@ -18,6 +22,7 @@ import com.ctre.phoenix6.signals.StripTypeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -38,7 +43,7 @@ import frc.robot.commands.swerve.lockToCenter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
-import frc.robot.subsystems.Limelight;
+import frc.robot.subsystems.PhotonVisionCamera;
 import edu.wpi.first.wpilibj.util.Color;
 
 
@@ -59,7 +64,7 @@ public class RobotContainer {
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
         .withTargetDirection(new Rotation2d());
     
-        
+    private AprilTagFieldLayout layout;
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     
@@ -73,7 +78,7 @@ public class RobotContainer {
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
 
-    private Limelight limelight = new Limelight(drivetrain, led);
+    private PhotonVisionCamera limelight;
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
@@ -81,6 +86,17 @@ public class RobotContainer {
         faceCenter.HeadingController.setPID(TrajectoryConstants.RotationalkP, TrajectoryConstants.RotationalkI, TrajectoryConstants.RotationalkD);
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
         
+        try{
+            layout = new AprilTagFieldLayout(
+                "/home/lvuser/deploy/2025-reefscape.json"
+            );
+            limelight = new PhotonVisionCamera(drivetrain, led, layout);
+        }
+        catch(IOException exc){
+            limelight = null;
+
+        };
+
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
