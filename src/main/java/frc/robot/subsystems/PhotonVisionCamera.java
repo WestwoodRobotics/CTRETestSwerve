@@ -9,6 +9,7 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,17 +26,18 @@ public class PhotonVisionCamera extends SubsystemBase{
     private Pose2d llPose;
     private PhotonCamera cameraOne;    
     private PhotonPipelineResult PVresult;
-
+    private AprilTagFieldLayout layout;
 
     private int tags;
     private boolean isOrange;
 
-    public PhotonVisionCamera(CommandSwerveDrivetrain drivetrain, LED candle){
+    public PhotonVisionCamera(CommandSwerveDrivetrain drivetrain, LED candle, AprilTagFieldLayout layout){
         this.drivetrain = drivetrain;
         this.candle = candle;
 
+        this.PVresult = null;
+        this.layout = layout;
         llPose = new Pose2d();
-        PVresult = new LimelightHelpers.PoseEstimate();
         tags = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
     }
@@ -43,10 +45,10 @@ public class PhotonVisionCamera extends SubsystemBase{
     @Override
     public void periodic(){
 
-        llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
-        tags = llResult.tagCount;
+        PVresult = cameraOne.getLatestResult();
+        tags = PVresult.getTargets().size();
 
-        if(llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
+        if(PVresult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
 
