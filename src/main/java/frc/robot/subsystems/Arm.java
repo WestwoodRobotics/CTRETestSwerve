@@ -53,19 +53,20 @@ public class Arm extends SubsystemBase {
         configureMotor();
 
         // Configure SysId routine
-        this.sysIdRoutine = new SysIdRoutine(
-            new SysIdRoutine.Config(
-                Volts.of(0.25).per(Second),
-                Volts.of(1),
-                null,
-                (state) -> SignalLogger.writeString("arm_state", state.toString())
-            ),
-            new SysIdRoutine.Mechanism(
-                volts -> motor.setControl(voltageRequest.withOutput(volts.in(Volts))),
-                null,
-                this
-            )
-        );
+        sysIdRoutine = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            Volts.of(0.25).per(Second),
+            Volts.of(1),
+            null,
+            // Log state with SignalLogger class
+            (state) -> SignalLogger.writeString("SysIdArm_state", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+           (volts) -> motor.setVoltage(volts.in(Volts)),
+           null,
+           this
+        )
+    );
 
         posEntry = tab.add("Position Rot", 0).getEntry();
         velEntry = tab.add("Velocity", 0).getEntry();
