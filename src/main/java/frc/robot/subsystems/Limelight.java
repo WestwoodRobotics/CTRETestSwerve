@@ -40,7 +40,7 @@ public class Limelight extends SubsystemBase{
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
         tags = llResult.tagCount;
 
-        if(llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
+        if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
 
