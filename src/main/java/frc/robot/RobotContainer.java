@@ -69,7 +69,7 @@ public class RobotContainer {
         
         CANdleConfiguration cfg = new CANdleConfiguration();
         cfg.LED.BrightnessScalar = 1.0;
-        cfg.LED.StripType = StripTypeValue.GRB;
+        cfg.LED.StripType = StripTypeValue.BRG;
 
         candle.getConfigurator().apply(cfg);
         
@@ -143,6 +143,8 @@ public class RobotContainer {
         joystick.b().onTrue(arm.runOnce(() -> arm.setPosition(ArmConstants.kMid)));
         // move to High position on y button
         joystick.y().onTrue(arm.runOnce(() -> arm.setPosition(ArmConstants.kHigh)));
+        // set motor encoder to zero on x button
+        joystick.x().onTrue(arm.runOnce(() -> arm.resetPosition(0.0)));
 
         // reset the field-centric heading on left bumper press
         //joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));

@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -26,14 +27,22 @@ import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
     private final TalonFX motor;
-    private final MotionMagicTorqueCurrentFOC magicTorqueRequest;
+    private final MotionMagicVoltage magicPositionRequest;
     private final MotionMagicVelocityVoltage magicVelocityRequest;
     private final VoltageOut voltageRequest;
     private final SysIdRoutine sysIdRoutine;
 
     private final ShuffleboardTab tab = Shuffleboard.getTab("Arm");
 
-    private GenericEntry posEntry, velEntry, accelEntry, isProLiscenced;
+    private GenericEntry posEntry, velEntry, accelEntry;
+
+    // Max trackers
+    private double maxVelRps = 0.0;
+    private double maxAccelRps2 = 0.0;
+
+    // For computed acceleration
+    private double lastVelRps = 0.0;
+    private double lastTimeSec = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
 
     /**
      * Creates an Arm subsystem with a TalonFX motor using magic motion profiling.
@@ -43,8 +52,9 @@ public class Arm extends SubsystemBase {
      */
     public Arm(int motorId, String canbus) {
         this.motor = new TalonFX(motorId, canbus);
-        this.magicTorqueRequest = new MotionMagicTorqueCurrentFOC(0)
-            .withSlot(0);
+        this.magicPositionRequest = new MotionMagicVoltage(0)
+            .withSlot(0)
+            .withEnableFOC(true);
         this.magicVelocityRequest = new MotionMagicVelocityVoltage(0)
             .withSlot(0)
             .withEnableFOC(true);
@@ -71,7 +81,6 @@ public class Arm extends SubsystemBase {
         posEntry = tab.add("Position Rot", 0).getEntry();
         velEntry = tab.add("Velocity", 0).getEntry();
         accelEntry = tab.add("Acceleration", 0).getEntry();
-        isProLiscenced = tab.add("Pro Liscensed", false).getEntry();
     }
 
     private void configureMotor() {
@@ -135,13 +144,12 @@ public class Arm extends SubsystemBase {
      * @param positionRotations Target position in rotations (mechanism frame)
      */
     public void setPosition(double positionRotations) {
-        // Clamp position to limits
-        double clampedPosition = Math.max(
-            Constants.ArmConstants.kMinPositionRotations,
-            Math.min(Constants.ArmConstants.kMaxPositionRotations, positionRotations)
-        );
 
-        motor.setControl(magicTorqueRequest.withPosition(positionRotations));
+        motor.setControl(magicPositionRequest.withPosition(positionRotations));
+    }
+
+    public void resetPosition(double positionRotations) {
+        motor.setPosition(positionRotations);
     }
 
     /**
@@ -183,10 +191,31 @@ public class Arm extends SubsystemBase {
      */
     @Override
     public void periodic() {
-        posEntry.setDouble(this.getPosition());
-        velEntry.setDouble(this.getVelocity());
-        accelEntry.setDouble(motor.getAcceleration().getValueAsDouble());
-        isProLiscenced.setBoolean(motor.getIsProLicensed().getValue());
+        // Current position/velocity
+        double pos = this.getPosition();
+        double vel = this.getVelocity();
+
+        // Prefer device-reported acceleration; compute if unavailable
+        double accel = motor.getAcceleration().getValueAsDouble();
+        // Update trackers
+        if (Math.abs(vel) > Math.abs(maxVelRps)) {
+            maxVelRps = vel;
+        }
+        if (Math.abs(accel) > Math.abs(maxAccelRps2)) {
+            maxAccelRps2 = accel;
+        }
+
+        // Publish to SmartDashboard
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber("Arm/PositionRot", pos);
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber("Arm/VelocityRps", vel);
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber("Arm/AccelRps2", accel);
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber("Arm/MaxVelocityRps", maxVelRps);
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber("Arm/MaxAccelRps2", maxAccelRps2);
+
+        // Keep Shuffleboard entries if desired
+        posEntry.setDouble(pos);
+        velEntry.setDouble(vel);
+        accelEntry.setDouble(accel);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
