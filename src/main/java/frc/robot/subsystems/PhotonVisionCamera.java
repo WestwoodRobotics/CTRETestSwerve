@@ -48,37 +48,48 @@ public class PhotonVisionCamera extends SubsystemBase{
 
     @Override
     public void periodic(){
+        SmartDashboard.putBoolean("Camera Connected", cameraOne.isConnected());
+        SmartDashboard.putBoolean("Result Not Null", PVresult != null);
 
         PVresult = cameraOne.getLatestResult();
-        if (PVresult != null) {
+        
+        if(PVresult.hasTargets()){
             tags = PVresult.getTargets().size();
-        }else{
+        } else{
             tags = 0;
         }
-
-        if(PVresult != null && tags >= LimelightConstants.kMinTags) {
-
-            llPose = PVresult.getBestTarget().getBestCameraToTarget();
+        if( PVresult.hasTargets()) {
 
             PhotonTrackedTarget bestTarget = PVresult.getBestTarget();
 
-            if(bestTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity
-               ) {
+            SmartDashboard.putNumber("LL ambiguity", bestTarget.getPoseAmbiguity());
 
+            if(bestTarget!= null && bestTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity
+               ) {
+                int tagId = bestTarget.getFiducialId();
+                SmartDashboard.putNumber("tag id", tagId);
+                
+                llPose =bestTarget.getBestCameraToTarget();
                 Pose3d tagPose = layout.getTagPose(bestTarget.getFiducialId()).orElse(null);
-                if (tagPose == null) {
-                    return; // Skip this update
+                SmartDashboard.putBoolean("tagpose", tagPose != null);
+                if( tagPose!= null){
+                    robotPose = tagPose.transformBy(llPose.inverse());
+                    SmartDashboard.putNumber("robotpose x", robotPose.getX());
+                    SmartDashboard.putNumber("robotpose y", robotPose.getY());
+
+
+                    drivetrain.addVisionMeasurement(
+                        robotPose.toPose2d(),
+                        PVresult.getTimestampSeconds()
+                        );
                 }
-                robotPose = tagPose.transformBy(llPose.inverse());
-                drivetrain.addVisionMeasurement(
-                    robotPose.toPose2d(),
-                    PVresult.getTimestampSeconds()
-                    );
+              
 
             }
         }
  
         if (hasValidTarget()){
+
             candle.cameraSetColor(Color.kGreen, 1);
         }
         else {
@@ -92,8 +103,7 @@ public class PhotonVisionCamera extends SubsystemBase{
         SmartDashboard.putBoolean("LL has target", hasValidTarget());
 
 
-        if(PVresult != null &&  PVresult.getTargets().size() == 1) {
-            SmartDashboard.putNumber("LL ambiguity", PVresult.getBestTarget().getPoseAmbiguity());
+        if(PVresult != null &&  PVresult.hasTargets()) {
             SmartDashboard.putNumber("LL Estimated Pose X", robotPose.getX());
             SmartDashboard.putNumber("LL Estimated Pose Y", robotPose.getY());
             SmartDashboard.putNumber("LL Estimated Pose Theta", robotPose.getRotation().toRotation2d().getDegrees());

@@ -24,7 +24,7 @@ public class LED extends SubsystemBase{
 
         CANdleConfiguration cfg = new CANdleConfiguration();
         cfg.LED.BrightnessScalar = 1.0;
-        cfg.LED.StripType = StripTypeValue.GRB;
+        cfg.LED.StripType = StripTypeValue.BRG;
 
         candle.getConfigurator().apply(cfg);
     }
@@ -57,7 +57,6 @@ public class LED extends SubsystemBase{
             clearColor();
         }
     }
-
     
     public void startFireAnimation(){
         FireAnimation FIRE = new FireAnimation(0,27).withBrightness(1).withCooling(0.3);
