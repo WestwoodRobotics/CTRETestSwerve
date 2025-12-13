@@ -52,6 +52,8 @@ public class PhotonVisionCamera extends SubsystemBase{
         PVresult = cameraOne.getLatestResult();
         if (PVresult != null) {
             tags = PVresult.getTargets().size();
+        }else{
+            tags = 0;
         }
 
         if(PVresult != null && tags >= LimelightConstants.kMinTags) {
@@ -67,7 +69,7 @@ public class PhotonVisionCamera extends SubsystemBase{
                 if (tagPose == null) {
                     return; // Skip this update
                 }
-                Pose3d robotPose = tagPose.transformBy(bestTarget.getBestCameraToTarget().inverse());
+                robotPose = tagPose.transformBy(llPose.inverse());
                 drivetrain.addVisionMeasurement(
                     robotPose.toPose2d(),
                     PVresult.getTimestampSeconds()
@@ -77,10 +79,10 @@ public class PhotonVisionCamera extends SubsystemBase{
         }
  
         if (hasValidTarget()){
-            candle.setSolidColor(Color.kOrange, 1);
+            candle.cameraSetColor(Color.kGreen, 1);
         }
         else {
-                candle.clearColor();
+            candle.cameraClearColor();
 
             
 
