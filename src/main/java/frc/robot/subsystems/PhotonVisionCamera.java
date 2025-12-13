@@ -32,15 +32,16 @@ public class PhotonVisionCamera extends SubsystemBase{
     private PhotonPipelineResult PVresult;
     private AprilTagFieldLayout layout;
     private int tags;
-    private boolean isOrange;
+    private Pose3d robotPose;
 
     public PhotonVisionCamera(CommandSwerveDrivetrain drivetrain, LED candle, AprilTagFieldLayout layout){
         this.drivetrain = drivetrain;
         this.candle = candle;
-        this.cameraOne = new PhotonCamera("cameraname");
+        this.cameraOne = new PhotonCamera("cameraone");
         this.PVresult = null;
         this.layout = layout;
         llPose = new Transform3d();
+        robotPose = new Pose3d();
         tags = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
     }
@@ -49,7 +50,9 @@ public class PhotonVisionCamera extends SubsystemBase{
     public void periodic(){
 
         PVresult = cameraOne.getLatestResult();
-        tags = PVresult.getTargets().size();
+        if (PVresult != null) {
+            tags = PVresult.getTargets().size();
+        }
 
         if(PVresult != null && tags >= LimelightConstants.kMinTags) {
 
@@ -58,9 +61,12 @@ public class PhotonVisionCamera extends SubsystemBase{
             PhotonTrackedTarget bestTarget = PVresult.getBestTarget();
 
             if(bestTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity
-                && bestTarget.getBestCameraToTarget().getTranslation().getNorm() < LimelightConstants.kMaxDistance) {
+               ) {
 
                 Pose3d tagPose = layout.getTagPose(bestTarget.getFiducialId()).orElse(null);
+                if (tagPose == null) {
+                    return; // Skip this update
+                }
                 Pose3d robotPose = tagPose.transformBy(bestTarget.getBestCameraToTarget().inverse());
                 drivetrain.addVisionMeasurement(
                     robotPose.toPose2d(),
@@ -72,14 +78,11 @@ public class PhotonVisionCamera extends SubsystemBase{
  
         if (hasValidTarget()){
             candle.setSolidColor(Color.kOrange, 1);
-            isOrange = true;
         }
         else {
-            if(isOrange){
                 candle.clearColor();
-                isOrange = false;
 
-            }
+            
 
         }
  
@@ -89,9 +92,9 @@ public class PhotonVisionCamera extends SubsystemBase{
 
         if(PVresult != null &&  PVresult.getTargets().size() == 1) {
             SmartDashboard.putNumber("LL ambiguity", PVresult.getBestTarget().getPoseAmbiguity());
-            SmartDashboard.putNumber("LL Estimated Pose X", llPose.getX());
-            SmartDashboard.putNumber("LL Estimated Pose Y", llPose.getY());
-            SmartDashboard.putNumber("LL Estimated Pose Theta", llPose.getRotation().toRotation2d().getDegrees());
+            SmartDashboard.putNumber("LL Estimated Pose X", robotPose.getX());
+            SmartDashboard.putNumber("LL Estimated Pose Y", robotPose.getY());
+            SmartDashboard.putNumber("LL Estimated Pose Theta", robotPose.getRotation().toRotation2d().getDegrees());
         }
        
     }
