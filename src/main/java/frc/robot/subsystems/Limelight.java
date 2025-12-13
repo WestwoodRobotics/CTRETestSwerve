@@ -22,7 +22,6 @@ public class Limelight extends SubsystemBase{
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
     private int tags;
-    private boolean isOrange;
 
     public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
@@ -54,20 +53,17 @@ public class Limelight extends SubsystemBase{
 
             }
         }
-/* 
+ 
         if (hasValidTarget()){
-            candle.setSolidColor(Color.kOrange, 1);
-            isOrange = true;
+            candle.cameraSetColor(Color.kGreen, 1);
         }
         else {
-            if(isOrange){
-                candle.clearColor();
-                isOrange = false;
-
-            }
+            candle.cameraClearColor();
 
         }
- */
+
+        
+ 
         SmartDashboard.putNumber("LL tag count", tags);
         SmartDashboard.putBoolean("LL has target", hasValidTarget());
 

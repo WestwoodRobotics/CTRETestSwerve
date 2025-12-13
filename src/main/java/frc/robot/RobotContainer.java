@@ -144,8 +144,16 @@ public class RobotContainer {
         ));
 
         //dpad right to turn on candle
-        joystick.povRight().onTrue(new InstantCommand(() -> led.setSolidColor(Color.kBlue, 1)))
-        .onFalse(new InstantCommand (() -> led.clearColor()));
+        joystick.povRight()
+        .onTrue(new InstantCommand(() ->{ 
+            led.setMode(LED.Mode.MANUAL);
+            led.setSolidColor(Color.kBlue, 1);
+        }))
+        .onFalse(new InstantCommand (() -> {
+            led.setMode(LED.Mode.CAMERA);
+            led.clearColor();
+        }));
+        
         // reset the field-centric heading on left bumper press
          joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
          joystick.povLeft().whileTrue(music);
