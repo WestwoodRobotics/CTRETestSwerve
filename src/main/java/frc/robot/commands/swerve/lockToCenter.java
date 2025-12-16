@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import pabeles.concurrency.IntOperatorTask.Max;
@@ -16,15 +17,13 @@ import pabeles.concurrency.IntOperatorTask.Max;
 public class lockToCenter extends Command{
     private final CommandSwerveDrivetrain drivetrain;
     private final SwerveRequest.FieldCentricFacingAngle faceCenter;
-    private final DoubleSupplier orbitDoubleSupplier;
-    private final DoubleSupplier radiusDoubleSupplier;
+    private CommandXboxController joystick;
     private double MaxAngularRate;
     private double MaxSpeed;
-    public lockToCenter(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentricFacingAngle faceCenter, DoubleSupplier orbitDoubleSupplier, DoubleSupplier radiusDoubleSupplier, double maxAngleRate, double maxSpeed){
+    public lockToCenter(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentricFacingAngle faceCenter, CommandXboxController joystick, double maxAngleRate, double maxSpeed){
         this.drivetrain = drivetrain;
         this.faceCenter = faceCenter;
-        this.orbitDoubleSupplier = orbitDoubleSupplier;
-        this.radiusDoubleSupplier = radiusDoubleSupplier;
+        this.joystick = joystick;
         this.MaxAngularRate = maxAngleRate;
         this.MaxSpeed = maxSpeed;
         addRequirements(drivetrain);
@@ -35,41 +34,22 @@ public class lockToCenter extends Command{
         Pose2d currentPose = drivetrain.getState().Pose;
         double dx = TrajectoryConstants.kCenterField.getX() - currentPose.getX();
         double dy = TrajectoryConstants.kCenterField.getY() - currentPose.getY();
-        Rotation2d targetAngle = new Rotation2d(Math.atan2(dy, dx) + Math.PI);
-        double radius = Math.hypot(dx, dy);
+        Rotation2d targetAngle = new Rotation2d(Math.atan2(dy, dx));
         
-        double input = orbitDoubleSupplier.getAsDouble();
-        double radiusinput = radiusDoubleSupplier.getAsDouble();
+        double magnitude = Math.sqrt(
+                        Math.pow(joystick.getLeftX(), 2) 
+                        + Math.pow(joystick.getLeftY(), 2)
+                    );
 
-        double tangentUx = -dy / radius;
-        double tangentUy = dx / radius; 
-
-        double radiusUx = dx / radius;
-        double radiusUy = dy / radius;
-        
-        double angularRate = MaxAngularRate * input;
-        double tangentialSpeed = angularRate * radius;
-        
-
-        double radiusSpeed = radiusinput * MaxSpeed;
-       
-        double vx = tangentUx*tangentialSpeed + radiusUx*radiusSpeed;
-        double vy = tangentUy*tangentialSpeed + radiusUy*radiusSpeed;
-        double speed = Math.hypot(vx, vy);
-
-        if(speed > MaxSpeed){
-            double scale = MaxSpeed / speed;
-            vx *= scale;
-            vy *= scale;
-        }
-
-        SmartDashboard.putNumber("Target angle degrees", targetAngle.getDegrees());
-        SmartDashboard.putNumber("Angle error degrees", targetAngle.minus(currentPose.getRotation()).getDegrees());
+        double angle = Math.atan2(joystick.getLeftY(), joystick.getLeftX()); // angle of joystick
+        double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
+        double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
+                    
         
         drivetrain.setControl(faceCenter
         .withTargetDirection(targetAngle)
-        .withVelocityX(vx)
-        .withVelocityY(vy)
+        .withVelocityX(-(yMagnitude) * MaxSpeed)
+        .withVelocityY(-(xMagnitude) * MaxSpeed)
         );
 
 
