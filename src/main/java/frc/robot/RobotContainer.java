@@ -151,7 +151,6 @@ public class RobotContainer {
 
         joystick.y().whileTrue(new lockToCenter(drivetrain, faceCenter,  
         joystick, 
-        MaxAngularRate,
         MaxSpeed));
         // drive forward at full speed on dpad up
         joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 

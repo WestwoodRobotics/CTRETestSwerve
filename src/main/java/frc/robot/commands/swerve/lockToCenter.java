@@ -18,13 +18,11 @@ public class lockToCenter extends Command{
     private final CommandSwerveDrivetrain drivetrain;
     private final SwerveRequest.FieldCentricFacingAngle faceCenter;
     private CommandXboxController joystick;
-    private double MaxAngularRate;
     private double MaxSpeed;
-    public lockToCenter(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentricFacingAngle faceCenter, CommandXboxController joystick, double maxAngleRate, double maxSpeed){
+    public lockToCenter(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentricFacingAngle faceCenter, CommandXboxController joystick, double maxSpeed){
         this.drivetrain = drivetrain;
         this.faceCenter = faceCenter;
         this.joystick = joystick;
-        this.MaxAngularRate = maxAngleRate;
         this.MaxSpeed = maxSpeed;
         addRequirements(drivetrain);
     }

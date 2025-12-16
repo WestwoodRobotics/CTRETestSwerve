@@ -27,22 +27,30 @@ public class PhotonVisionCamera extends SubsystemBase{
     private CommandSwerveDrivetrain drivetrain;
     private LED candle;
 
-    private Transform3d llPose;
-    private PhotonCamera cameraOne;    
+    private Transform3d firstllPose;
+    private Transform3d secondllPose;
+    private PhotonCamera cameraOne;   
+    private PhotonCamera cameraTwo;    
     private PhotonPipelineResult PVresult;
+    private PhotonPipelineResult PVresult2;
     private AprilTagFieldLayout layout;
-    private int tags;
+    private int tagsize1;
+    private int tagsize2;
     private Pose3d robotPose;
 
     public PhotonVisionCamera(CommandSwerveDrivetrain drivetrain, LED candle, AprilTagFieldLayout layout){
         this.drivetrain = drivetrain;
         this.candle = candle;
         this.cameraOne = new PhotonCamera("cameraone");
+        this.cameraTwo = new PhotonCamera("cameratwo");
         this.PVresult = null;
+        this.PVresult2 = null;
         this.layout = layout;
-        llPose = new Transform3d();
+        this.firstllPose = new Transform3d();
+        this.secondllPose = new Transform3d();
         robotPose = new Pose3d();
-        tags = 0;
+        tagsize1 = 0;
+        tagsize2 = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
     }
 
@@ -52,28 +60,44 @@ public class PhotonVisionCamera extends SubsystemBase{
         SmartDashboard.putBoolean("Result Not Null", PVresult != null);
 
         PVresult = cameraOne.getLatestResult();
+        PVresult2 = cameraTwo.getLatestResult();        
         
         if(PVresult.hasTargets()){
-            tags = PVresult.getTargets().size();
+            tagsize1 = PVresult.getTargets().size();
         } else{
-            tags = 0;
+            tagsize1 = 0;
         }
-        if( PVresult.hasTargets()) {
+        if(PVresult2.hasTargets()){
+            tagsize2 =  PVresult2.getTargets().size();
+        } else{
+            tagsize2 = 0;
+        }
 
-            PhotonTrackedTarget bestTarget = PVresult.getBestTarget();
 
-            SmartDashboard.putNumber("LL ambiguity", bestTarget.getPoseAmbiguity());
+        if (PVresult.hasTargets() || PVresult2.hasTargets()) {
 
-            if(bestTarget!= null && bestTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity
-               ) {
-                int tagId = bestTarget.getFiducialId();
-                SmartDashboard.putNumber("tag id", tagId);
+            PhotonTrackedTarget firstTarget = PVresult.getBestTarget();
+            PhotonTrackedTarget secondTarget = PVresult.getBestTarget();
+
+            SmartDashboard.putNumber("CamOne ambiguity", firstTarget.getPoseAmbiguity());
+            SmartDashboard.putNumber("CamTwo ambiguity", secondTarget.getPoseAmbiguity());
+
+            if((firstTarget!= null && firstTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity) 
+            || (secondTarget != null && secondTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity)) {
+
+                int firsttagId = firstTarget.getFiducialId();
+                int secondtagId = secondTarget.getFiducialId();
+                SmartDashboard.putNumber("first tag id", firsttagId);
+                SmartDashboard.putNumber("second tag id", secondtagId);
+
                 
-                llPose =bestTarget.getBestCameraToTarget();
-                Pose3d tagPose = layout.getTagPose(bestTarget.getFiducialId()).orElse(null);
-                SmartDashboard.putBoolean("tagpose", tagPose != null);
-                if( tagPose!= null){
-                    robotPose = tagPose.transformBy(llPose.inverse());
+                firstllPose =firstTarget.getBestCameraToTarget();
+                secondllPose = secondTarget.getBestCameraToTarget();
+                
+                Pose3d firstTagPose = layout.getTagPose(firstTarget.getFiducialId()).orElse(null);
+                SmartDashboard.putBoolean("tagpose", firstTagPose != null);
+                if( firstTagPose!= null){
+                    robotPose = tagPose.transformBy(firstllPose.inverse());
                     SmartDashboard.putNumber("robotpose x", robotPose.getX());
                     SmartDashboard.putNumber("robotpose y", robotPose.getY());
 
@@ -88,8 +112,7 @@ public class PhotonVisionCamera extends SubsystemBase{
             }
         }
  
-        if (hasValidTarget()){
-
+        if (hasValidTargetCamOne() || hasValidTargetCamTwo()){
             candle.cameraSetColor(Color.kGreen, 1);
         }
         else {
@@ -99,11 +122,13 @@ public class PhotonVisionCamera extends SubsystemBase{
 
         }
  
-        SmartDashboard.putNumber("LL tag count", tags);
-        SmartDashboard.putBoolean("LL has target", hasValidTarget());
+        SmartDashboard.putNumber("CameraOne tag count", tagsize1);
+        SmartDashboard.putBoolean("CameraOne has target", hasValidTargetCamOne());
+        SmartDashboard.putNumber("CameraTwo tag count", tagsize2);
+        SmartDashboard.putBoolean("CameraTwo has target", hasValidTargetCamTwo());
 
 
-        if(PVresult != null &&  PVresult.hasTargets()) {
+        if(PVresult != null && PVresult.hasTargets() || PVresult2 != null && PVresult2.hasTargets()) {
             SmartDashboard.putNumber("LL Estimated Pose X", robotPose.getX());
             SmartDashboard.putNumber("LL Estimated Pose Y", robotPose.getY());
             SmartDashboard.putNumber("LL Estimated Pose Theta", robotPose.getRotation().toRotation2d().getDegrees());
@@ -111,11 +136,14 @@ public class PhotonVisionCamera extends SubsystemBase{
        
     }
 
-    public boolean hasValidTarget(){
-        return (PVresult != null && tags >= LimelightConstants.kMinTags);
+    public boolean hasValidTargetCamOne(){
+        return (PVresult != null && tagsize1 >= LimelightConstants.kMinTags);
+    }
+    public boolean hasValidTargetCamTwo(){
+        return (PVresult2 != null && tagsize2 >= LimelightConstants.kMinTags);
     }
     public int getNumTag() {
-        return tags;
+        return tagsize1 + tagsize2;
     }
     public Pose2d getEstimatedPose() {
         Pose2d fieldPose = layout.getTagPose(PVresult.getBestTarget().getFiducialId()).orElse(new Pose3d()).toPose2d();
