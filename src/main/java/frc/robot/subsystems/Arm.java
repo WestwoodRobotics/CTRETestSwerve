@@ -117,7 +117,8 @@ public class Arm extends SubsystemBase {
             .withKS(Constants.ArmConstants.kS)
             .withKV(Constants.ArmConstants.kV)
             .withKA(Constants.ArmConstants.kA)
-            .withKG(Constants.ArmConstants.kG);
+            .withKG(Constants.ArmConstants.kG)
+            .withGravityType(GravityTypeValue.Arm_Cosine);
         config.Slot1 = slot1;
 
         // Magic motion configuration
