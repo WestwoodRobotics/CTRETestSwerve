@@ -4,6 +4,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs; // added
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
@@ -56,7 +57,7 @@ public class Arm extends SubsystemBase {
             .withSlot(0)
             .withEnableFOC(true);
         this.magicVelocityRequest = new MotionMagicVelocityVoltage(0)
-            .withSlot(0)
+            .withSlot(1) // use feedforward-only slot for velocity
             .withEnableFOC(true);
         this.voltageRequest = new VoltageOut(0);
 
@@ -96,7 +97,7 @@ public class Arm extends SubsystemBase {
         // Set initial position offset
         motor.setPosition(Constants.ArmConstants.kZeroOffsetRotations);
 
-        // Slot 0: PID + Feedforward for magic motion
+        // Slot 0: PID + Feedforward for magic motion position
         Slot0Configs slot0 = new Slot0Configs();
         slot0.withKP(Constants.ArmConstants.kP)
             .withKI(Constants.ArmConstants.kI)
@@ -107,6 +108,17 @@ public class Arm extends SubsystemBase {
             .withKG(Constants.ArmConstants.kG)
             .withGravityType(GravityTypeValue.Arm_Cosine);
         config.Slot0 = slot0;
+
+        // Slot 1: Feedforward-only for velocity (PID gains zeroed)
+        Slot1Configs slot1 = new Slot1Configs();
+        slot1.withKP(0.0)
+            .withKI(0.0)
+            .withKD(0.0)
+            .withKS(Constants.ArmConstants.kS)
+            .withKV(Constants.ArmConstants.kV)
+            .withKA(Constants.ArmConstants.kA)
+            .withKG(Constants.ArmConstants.kG);
+        config.Slot1 = slot1;
 
         // Magic motion configuration
         MotionMagicConfigs motionMagicConfigs = new MotionMagicConfigs();
