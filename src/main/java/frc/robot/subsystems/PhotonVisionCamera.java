@@ -28,21 +28,28 @@ public class PhotonVisionCamera extends SubsystemBase{
     private LED candle;
 
     private Transform3d llPose;
-    private PhotonCamera cameraOne;    
+    private PhotonCamera cameraOne;
+    private PhotonCamera cameraTwo;    
     private PhotonPipelineResult PVresult;
+    private PhotonPipelineResult PVresultTwo;
     private AprilTagFieldLayout layout;
     private int tags;
+    private int tagsTwo;
+
     private Pose3d robotPose;
 
     public PhotonVisionCamera(CommandSwerveDrivetrain drivetrain, LED candle, AprilTagFieldLayout layout){
         this.drivetrain = drivetrain;
         this.candle = candle;
         this.cameraOne = new PhotonCamera("cameraone");
+        this.cameraTwo = new PhotonCamera("cameratwo");
         this.PVresult = null;
+        this.PVresultTwo = null;
         this.layout = layout;
         llPose = new Transform3d();
         robotPose = new Pose3d();
         tags = 0;
+        tagsTwo = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
     }
 
@@ -52,13 +59,52 @@ public class PhotonVisionCamera extends SubsystemBase{
         SmartDashboard.putBoolean("Result Not Null", PVresult != null);
 
         PVresult = cameraOne.getLatestResult();
-        
+        PVresultTwo = cameraOne.getLatestResult();
+
         if(PVresult.hasTargets()){
             tags = PVresult.getTargets().size();
         } else{
             tags = 0;
         }
+
+        if(PVresultTwo.hasTargets()){
+            tagsTwo = PVresultTwo.getTargets().size();
+        } else{
+            tagsTwo = 0;
+        }
+
+
         if( PVresult.hasTargets()) {
+
+            PhotonTrackedTarget bestTarget = PVresult.getBestTarget();
+
+            SmartDashboard.putNumber("LL ambiguity", bestTarget.getPoseAmbiguity());
+
+            if(bestTarget!= null && bestTarget.poseAmbiguity < LimelightConstants.kMaxAmbiguity
+               ) {
+                int tagId = bestTarget.getFiducialId();
+                SmartDashboard.putNumber("tag id", tagId);
+                
+                llPose =bestTarget.getBestCameraToTarget();
+                Pose3d tagPose = layout.getTagPose(bestTarget.getFiducialId()).orElse(null);
+                SmartDashboard.putBoolean("tagpose", tagPose != null);
+                if( tagPose!= null){
+                    robotPose = tagPose.transformBy(llPose.inverse());
+                    SmartDashboard.putNumber("robotpose x", robotPose.getX());
+                    SmartDashboard.putNumber("robotpose y", robotPose.getY());
+
+
+                    drivetrain.addVisionMeasurement(
+                        robotPose.toPose2d(),
+                        PVresult.getTimestampSeconds()
+                        );
+                }
+              
+
+            }
+        }
+
+        if( PVresultTwo.hasTargets()) {
 
             PhotonTrackedTarget bestTarget = PVresult.getBestTarget();
 
