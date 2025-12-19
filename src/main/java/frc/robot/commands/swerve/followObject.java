@@ -4,7 +4,9 @@ import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class followObject extends Command{
@@ -29,6 +31,12 @@ public class followObject extends Command{
         double xInput = xDoubleSupplier.getAsDouble();
         double yInput = YDoubleSupplier.getAsDouble();
 
+        Pose2d currentPose = drivetrain.getState().Pose;
+        double dx = currentPose.getX() - TrajectoryConstants.kCenterField.getX();
+        double dY = currentPose.getY() - TrajectoryConstants.kCenterField.getY();
+        
+        double distance = Math.hypot(dx, dY);
+        
         double vx = xInput * MaxSpeed;
         double vy = yInput * MaxSpeed;
 
