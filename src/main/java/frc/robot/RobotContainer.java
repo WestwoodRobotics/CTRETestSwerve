@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
+import frc.robot.commands.swerve.followObject;
 import frc.robot.commands.swerve.lockToCenter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -62,6 +63,11 @@ public class RobotContainer {
         .withRotationalDeadband(MaxAngularRate*0.1)
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
         .withTargetDirection(new Rotation2d());
+    private final SwerveRequest.FieldCentric faceObject = 
+        new SwerveRequest.FieldCentric()
+        .withDeadband(MaxSpeed*0.1)
+        .withRotationalDeadband(MaxAngularRate*0.1)
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     
     private AprilTagFieldLayout layout;
 
@@ -148,10 +154,15 @@ public class RobotContainer {
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
 
-        joystick.y().whileTrue(new lockToCenter(drivetrain, faceCenter, 
+     /*    joystick.y().whileTrue(new lockToCenter(drivetrain, faceCenter, 
         () -> joystick.getRightX(), 
         () -> joystick.getLeftY(), 
         MaxAngularRate,
+        MaxSpeed));
+ */
+        joystick.y().whileTrue(new followObject(drivetrain, faceObject, 
+        () -> joystick.getLeftX(), 
+        () -> joystick.getLeftY(), 
         MaxSpeed));
         // drive forward at full speed on dpad up
         joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 
