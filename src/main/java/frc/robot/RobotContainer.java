@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.*;
 
 import java.io.IOException;
 
-import org.photonvision.proto.Photon;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.Orchestra;
