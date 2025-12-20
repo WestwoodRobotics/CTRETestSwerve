@@ -5,6 +5,7 @@ import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -16,6 +17,7 @@ public class followObject extends Command{
     private final DoubleSupplier YDoubleSupplier;
     private double MaxAngularRate;
     private double MaxSpeed;
+    private double kp = 1;
 
     public followObject(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentric followObj, DoubleSupplier xDoubleSupplier, DoubleSupplier YDoubleSupplier, double maxSpeed){
         this.drivetrain = drivetrain;
@@ -33,16 +35,66 @@ public class followObject extends Command{
 
         Pose2d currentPose = drivetrain.getState().Pose;
         double dx = currentPose.getX() - TrajectoryConstants.kCenterField.getX();
-        double dY = currentPose.getY() - TrajectoryConstants.kCenterField.getY();
+        double dy= currentPose.getY() - TrajectoryConstants.kCenterField.getY();
         
-        double distance = Math.hypot(dx, dY);
-        
+        double distance = Math.hypot(dx, dy);
+        double heading = drivetrain.getState().Pose.getRotation().getRadians();
+        double angle = Math.atan2(dy, dx);
+
+        double angleDiff = Math.atan2(Math.sin(angle - heading), Math.cos(angle - heading));
+
+
         double vx = xInput * MaxSpeed;
         double vy = yInput * MaxSpeed;
 
-        drivetrain.setControl(followObj
-        .withVelocityX(vx)
-        .withVelocityY(vy)
+
+        SmartDashboard.putNumber("angle diff", Math.abs(Math.toDegrees(angleDiff)));
+        if(Math.abs(Math.toDegrees(angleDiff)) <= 75 && distance >= 2) {
+            SmartDashboard.putBoolean("inview", true);
+            double directionX = dx/distance;
+            double directionY = dy/distance;
+
+            SmartDashboard.putNumber("Distance", distance);
+            double proportionalPullX = directionX * distance * kp;
+            double proportionalPullY = directionY * distance * kp;
+
+            double resultX = vx + proportionalPullX;
+            double resultY = vy + proportionalPullY;
+
+            
+            if(resultX > MaxSpeed){
+                resultX = MaxSpeed;
+            }
+            if(resultX < -MaxSpeed){
+                resultX = -MaxSpeed;
+            }
+
+
+            if(resultY > MaxSpeed){
+                resultY = MaxSpeed;
+            }
+            if(resultY < -MaxSpeed){
+                resultY = -MaxSpeed;
+            }
+
+            SmartDashboard.putNumber("Direction X", directionX);
+            SmartDashboard.putNumber("Direction Y", directionY);
+            SmartDashboard.putNumber("Resultant X", resultX);
+            SmartDashboard.putNumber("Resultant Y", resultY);
+            drivetrain.setControl(followObj
+            .withVelocityX(resultX)
+            .withVelocityY(resultY)
         );
+
+        }
+        else{
+            SmartDashboard.putBoolean("inview", false);
+            drivetrain.setControl(followObj
+            .withVelocityX(0)
+            .withVelocityY(0));
+        }
+        
+
+       
     }
 }
