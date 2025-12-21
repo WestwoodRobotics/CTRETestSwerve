@@ -15,9 +15,8 @@ public class followObject extends Command{
     private final SwerveRequest.FieldCentric followObj;
     private final DoubleSupplier xDoubleSupplier;
     private final DoubleSupplier YDoubleSupplier;
-    private double MaxAngularRate;
     private double MaxSpeed;
-    private double kp = 1;
+    private double kp = 0.1;
 
     public followObject(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentric followObj, DoubleSupplier xDoubleSupplier, DoubleSupplier YDoubleSupplier, double maxSpeed){
         this.drivetrain = drivetrain;
@@ -34,47 +33,40 @@ public class followObject extends Command{
         double yInput = YDoubleSupplier.getAsDouble();
 
         Pose2d currentPose = drivetrain.getState().Pose;
-        double dx = currentPose.getX() - TrajectoryConstants.kCenterField.getX();
-        double dy= currentPose.getY() - TrajectoryConstants.kCenterField.getY();
+        double dx = TrajectoryConstants.kCenterField.getX() - currentPose.getX() ;
+        double dy = TrajectoryConstants.kCenterField.getY() - currentPose.getY() ;
         
         double distance = Math.hypot(dx, dy);
         double heading = drivetrain.getState().Pose.getRotation().getRadians();
         double angle = Math.atan2(dy, dx);
-
         double angleDiff = Math.atan2(Math.sin(angle - heading), Math.cos(angle - heading));
-
 
         double vx = xInput * MaxSpeed;
         double vy = yInput * MaxSpeed;
 
+        double joystickMag = Math.hypot(xInput, yInput);
 
         SmartDashboard.putNumber("angle diff", Math.abs(Math.toDegrees(angleDiff)));
+        SmartDashboard.putNumber("dx", dx);
+        SmartDashboard.putNumber("dy", dy);
+
         if(Math.abs(Math.toDegrees(angleDiff)) <= 75 && distance >= 2) {
             SmartDashboard.putBoolean("inview", true);
             double directionX = dx/distance;
             double directionY = dy/distance;
 
             SmartDashboard.putNumber("Distance", distance);
-            double proportionalPullX = directionX * distance * kp;
-            double proportionalPullY = directionY * distance * kp;
+            double proportionalPullX = directionX * distance * kp * joystickMag;
+            double proportionalPullY = directionY * distance * kp  * joystickMag;
 
             double resultX = vx + proportionalPullX;
             double resultY = vy + proportionalPullY;
 
-            
-            if(resultX > MaxSpeed){
-                resultX = MaxSpeed;
-            }
-            if(resultX < -MaxSpeed){
-                resultX = -MaxSpeed;
-            }
-
-
-            if(resultY > MaxSpeed){
-                resultY = MaxSpeed;
-            }
-            if(resultY < -MaxSpeed){
-                resultY = -MaxSpeed;
+            double speed = Math.hypot(resultX, resultY);
+            if(speed > MaxSpeed){
+                double scale = MaxSpeed / speed;
+                resultX *= scale;
+                resultY *= scale;
             }
 
             SmartDashboard.putNumber("Direction X", directionX);
