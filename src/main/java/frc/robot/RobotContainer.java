@@ -160,10 +160,9 @@ public class RobotContainer {
         MaxAngularRate,
         MaxSpeed));
  */
-        joystick.y().whileTrue(new followObject(drivetrain, faceObject, 
-        () -> joystick.getLeftY(), 
-        () -> joystick.getLeftX(), 
-        MaxSpeed));
+        joystick.rightTrigger().whileTrue(new followObject(drivetrain, faceObject, 
+        joystick, 
+        TrajectoryConstants.kMaxSpeed, MaxAngularRate));
         // drive forward at full speed on dpad up
         joystick.povUp().whileTrue(drivetrain.applyRequest(() -> 
             drive.withVelocityX(-MaxSpeed)

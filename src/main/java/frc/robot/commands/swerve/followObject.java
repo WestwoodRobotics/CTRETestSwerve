@@ -5,32 +5,35 @@ import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class followObject extends Command{
     private final CommandSwerveDrivetrain drivetrain;
     private final SwerveRequest.FieldCentric followObj;
-    private final DoubleSupplier xDoubleSupplier;
-    private final DoubleSupplier YDoubleSupplier;
+    private CommandXboxController joystick;
+    private double maxAngularRate;
     private double MaxSpeed;
-    private double kp = 0.1;
+    private double kp = 3;
 
-    public followObject(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentric followObj, DoubleSupplier xDoubleSupplier, DoubleSupplier YDoubleSupplier, double maxSpeed){
+    public followObject(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentric followObj, CommandXboxController joystick,double maxSpeed, double maxAngularRate){
         this.drivetrain = drivetrain;
         this.followObj = followObj;
-        this.xDoubleSupplier = xDoubleSupplier;
-        this.YDoubleSupplier = YDoubleSupplier;
+        this.joystick = joystick;
         this.MaxSpeed = maxSpeed;
+        this.maxAngularRate = maxAngularRate;
         addRequirements(drivetrain);
     }
 
     @Override
     public void execute(){
-        double xInput = xDoubleSupplier.getAsDouble();
-        double yInput = YDoubleSupplier.getAsDouble();
+        double xInput = -joystick.getLeftX();
+        double yInput = joystick.getLeftY();
+        double rightX = joystick.getRightX();
 
         Pose2d currentPose = drivetrain.getState().Pose;
         double dx = TrajectoryConstants.kCenterField.getX() - currentPose.getX() ;
@@ -41,16 +44,21 @@ public class followObject extends Command{
         double angle = Math.atan2(dy, dx);
         double angleDiff = Math.atan2(Math.sin(angle - heading), Math.cos(angle - heading));
 
-        double vx = xInput * MaxSpeed;
-        double vy = yInput * MaxSpeed;
+        double vx = -xInput * MaxSpeed;
+        double vy = -yInput * MaxSpeed;
 
         double joystickMag = Math.hypot(xInput, yInput);
 
-        SmartDashboard.putNumber("angle diff", Math.abs(Math.toDegrees(angleDiff)));
+        double joystickAngle = Math.toDegrees(Math.atan2(yInput,xInput)) + 90;
+        joystickAngle = normalizeAngle(joystickAngle);
+        SmartDashboard.putNumber("joystickangle", joystickAngle);
+        SmartDashboard.putNumber("anlge", Math.toDegrees(angle));
         SmartDashboard.putNumber("dx", dx);
         SmartDashboard.putNumber("dy", dy);
+        SmartDashboard.putNumber("diff", Math.abs(Math.toDegrees(angle) - joystickAngle));
 
-        if(Math.abs(Math.toDegrees(angleDiff)) <= 75 && distance >= 2) {
+        if(Math.abs(Math.toDegrees(angleDiff)) <= 75 && distance >= 0.5
+            && Math.abs(Math.toDegrees(angle) - joystickAngle) < 90) {
             SmartDashboard.putBoolean("inview", true);
             double directionX = dx/distance;
             double directionY = dy/distance;
@@ -69,13 +77,12 @@ public class followObject extends Command{
                 resultY *= scale;
             }
 
-            SmartDashboard.putNumber("Direction X", directionX);
-            SmartDashboard.putNumber("Direction Y", directionY);
             SmartDashboard.putNumber("Resultant X", resultX);
             SmartDashboard.putNumber("Resultant Y", resultY);
             drivetrain.setControl(followObj
             .withVelocityX(resultX)
             .withVelocityY(resultY)
+            .withRotationalRate(-Math.copySign(rightX * rightX, rightX) * maxAngularRate) // Drive counterclockwise with squared X (maintaining sign))
         );
 
         }
@@ -88,5 +95,11 @@ public class followObject extends Command{
         
 
        
+    }
+
+    private double normalizeAngle(double angle) {
+        while (angle > 180) angle -= 360;
+        while (angle < -180) angle += 360;
+        return angle;
     }
 }
