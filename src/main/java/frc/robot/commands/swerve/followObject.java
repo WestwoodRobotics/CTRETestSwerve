@@ -18,7 +18,7 @@ public class followObject extends Command{
     private CommandXboxController joystick;
     private double maxAngularRate;
     private double MaxSpeed;
-    private double kp = 3;
+    private double kp = 1.5;
 
     public followObject(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentric followObj, CommandXboxController joystick,double maxSpeed, double maxAngularRate){
         this.drivetrain = drivetrain;
@@ -31,8 +31,8 @@ public class followObject extends Command{
 
     @Override
     public void execute(){
-        double xInput = -joystick.getLeftX();
-        double yInput = joystick.getLeftY();
+        double xInput = joystick.getLeftY();
+        double yInput = joystick.getLeftX();
         double rightX = joystick.getRightX();
 
         Pose2d currentPose = drivetrain.getState().Pose;
@@ -49,15 +49,14 @@ public class followObject extends Command{
 
         double joystickMag = Math.hypot(xInput, yInput);
 
-        double joystickAngle = Math.toDegrees(Math.atan2(yInput,xInput)) + 90;
+        double joystickAngle = Math.toDegrees(Math.atan2(yInput,xInput)) + 180;
         joystickAngle = normalizeAngle(joystickAngle);
-        SmartDashboard.putNumber("joystickangle", joystickAngle);
         SmartDashboard.putNumber("anlge", Math.toDegrees(angle));
+        SmartDashboard.putNumber("angle diff",  Math.abs(Math.toDegrees(angle) - joystickAngle));
         SmartDashboard.putNumber("dx", dx);
         SmartDashboard.putNumber("dy", dy);
-        SmartDashboard.putNumber("diff", Math.abs(Math.toDegrees(angle) - joystickAngle));
 
-        if(Math.abs(Math.toDegrees(angleDiff)) <= 75 && distance >= 0.5
+        if(Math.abs(Math.toDegrees(angleDiff)) <= 75 && distance >= 0.1
             && Math.abs(Math.toDegrees(angle) - joystickAngle) < 90) {
             SmartDashboard.putBoolean("inview", true);
             double directionX = dx/distance;
@@ -66,6 +65,8 @@ public class followObject extends Command{
             SmartDashboard.putNumber("Distance", distance);
             double proportionalPullX = directionX * distance * kp * joystickMag;
             double proportionalPullY = directionY * distance * kp  * joystickMag;
+            SmartDashboard.putNumber("pull X", proportionalPullX);
+            SmartDashboard.putNumber("pull Y", proportionalPullY);
 
             double resultX = vx + proportionalPullX;
             double resultY = vy + proportionalPullY;
@@ -89,8 +90,8 @@ public class followObject extends Command{
         else{
             SmartDashboard.putBoolean("inview", false);
             drivetrain.setControl(followObj
-            .withVelocityX(0)
-            .withVelocityY(0));
+            .withVelocityX(vx)
+            .withVelocityY(vy));
         }
         
 
