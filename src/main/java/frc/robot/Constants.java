@@ -53,7 +53,9 @@ public final class Constants {
     
 
     public static final class LimelightConstants {
-        public static final String kName = "limelight";
+        public static final String kLimelightOne = "limelight";
+        public static final String kLimelightTwo = "limelightTwo";
+
         public static final double kXyStdDev = 0.2;
         public static final double kThetaStdDev = Math.toRadians(10);
         public static final Matrix<N3, N1> kStdDevs = VecBuilder.fill(

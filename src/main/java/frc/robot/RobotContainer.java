@@ -69,7 +69,6 @@ public class RobotContainer {
         .withRotationalDeadband(MaxAngularRate*0.1)
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     
-    private AprilTagFieldLayout layout;
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     
@@ -82,8 +81,8 @@ public class RobotContainer {
     private final SendableChooser<Command> autoChooser;
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
+    private Limelight limelight = new Limelight(drivetrain, led);
 
-    private Limelight limelight;
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
@@ -92,12 +91,10 @@ public class RobotContainer {
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
         
         try{
-            layout = new AprilTagFieldLayout(
-                "/home/lvuser/deploy/2025-reefscape.json"
-            );
+            
             limelight = new Limelight(drivetrain, led);
         }
-        catch(IOException exc){
+        catch(Exception exc){
             limelight = null;
 
         };
