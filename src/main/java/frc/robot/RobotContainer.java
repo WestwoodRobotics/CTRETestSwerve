@@ -43,7 +43,7 @@ import frc.robot.commands.swerve.lockToCenter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
-import frc.robot.subsystems.PhotonVisionCamera;
+import frc.robot.subsystems.Limelight;
 import edu.wpi.first.wpilibj.util.Color;
 
 
@@ -83,7 +83,7 @@ public class RobotContainer {
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
 
-    private PhotonVisionCamera limelight;
+    private Limelight limelight;
 
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
@@ -95,7 +95,7 @@ public class RobotContainer {
             layout = new AprilTagFieldLayout(
                 "/home/lvuser/deploy/2025-reefscape.json"
             );
-            limelight = new PhotonVisionCamera(drivetrain, led, layout);
+            limelight = new Limelight(drivetrain, led);
         }
         catch(IOException exc){
             limelight = null;
