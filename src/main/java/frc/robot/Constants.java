@@ -53,7 +53,7 @@ public final class Constants {
     
 
     public static final class LimelightConstants {
-        public static final String kLimelightOne = "limelight";
+        public static final String kLimelightOne = "limelight-one";
         public static final String kLimelightTwo = "limelight-two";
 
         public static final double kXyStdDev = 0.2;

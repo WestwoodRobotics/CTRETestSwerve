@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -29,6 +30,16 @@ public class Limelight extends SubsystemBase{
     private int tags;
 
     public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
+        PortForwarder.add(5801, "172.29.0.1", 5801);
+        PortForwarder.add(5802, "172.29.0.1", 5802);
+        PortForwarder.add(5803, "172.29.0.1", 5803);
+        PortForwarder.add(5804, "172.29.0.1", 5804);
+        PortForwarder.add(5805, "172.29.0.1", 5805);
+        PortForwarder.add(5806, "172.29.0.1", 5806);
+        PortForwarder.add(5807, "172.29.0.1", 5807);
+        PortForwarder.add(5808, "172.29.0.1", 5808);
+        PortForwarder.add(5809, "172.29.0.1", 5809);
+
         this.drivetrain = drivetrain;
         this.candle = candle;
 
@@ -41,7 +52,6 @@ public class Limelight extends SubsystemBase{
         tags = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kLimelightOne, LimelightConstants.kPipelineIndex);
         LimelightHelpers.setPipelineIndex(LimelightConstants.kLimelightTwo, LimelightConstants.kPipelineIndex);
-
 
         
 
@@ -103,9 +113,10 @@ public class Limelight extends SubsystemBase{
         }
         SmartDashboard.putNumber("LL tag count", tags);
         SmartDashboard.putBoolean("LL has target", hasValidTarget());
-        SmartDashboard.putBoolean("LL2 has target", llResult2.tagCount>0);
+        SmartDashboard.putBoolean("LL null", llResult != null);
         SmartDashboard.putBoolean("LL2 null", llResult2 != null);
-
+        SmartDashboard.putBoolean("LL2 has target", hasValidTarget2());
+        SmartDashboard.putNumber("tags", llResult2.tagCount);
 
         if(llResult != null && llResult.rawFiducials != null && llResult.rawFiducials.length == 1) {
             SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);
