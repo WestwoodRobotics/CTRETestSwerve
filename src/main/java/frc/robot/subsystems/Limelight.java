@@ -22,12 +22,12 @@ public class Limelight extends SubsystemBase{
     
     private CommandSwerveDrivetrain drivetrain;
     private LED candle;
-
     private Pose2d llPoseOne;
     private Pose2d llPoseTwo;
     private LimelightHelpers.PoseEstimate llResult;
     private LimelightHelpers.PoseEstimate llResult2;
     private int tags;
+
     public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
         this.candle = candle;
@@ -42,6 +42,10 @@ public class Limelight extends SubsystemBase{
         LimelightHelpers.setPipelineIndex(LimelightConstants.kLimelightOne, LimelightConstants.kPipelineIndex);
         LimelightHelpers.setPipelineIndex(LimelightConstants.kLimelightTwo, LimelightConstants.kPipelineIndex);
 
+
+        
+
+
     }
 
     @Override
@@ -49,12 +53,21 @@ public class Limelight extends SubsystemBase{
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kLimelightOne);
         llResult2 = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kLimelightTwo);
+        tags = 0;
 
-        tags = llResult.tagCount + llResult2.tagCount;
+        if (llResult != null) {
+            tags += llResult.tagCount;
+        }
+    
+        // Check if llResult2 is not null and add its tag count
+        if (llResult2 != null) {
+            tags += llResult2.tagCount;
+        }
+    
         
 
         if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 
-           && llResult != null && llResult2.tagCount >= LimelightConstants.kMinTags && llResult2.rawFiducials != null && llResult2.rawFiducials.length > 0) {
+           && llResult2 != null && llResult2.tagCount >= LimelightConstants.kMinTags && llResult2.rawFiducials != null && llResult2.rawFiducials.length > 0) {
 
             llPoseOne = llResult.pose;
             llPoseTwo = llResult2.pose;
@@ -70,7 +83,7 @@ public class Limelight extends SubsystemBase{
             );
 
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
-                && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
+                && llResult2.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
 
                 drivetrain.addVisionMeasurement(
                     combinedPose2d,
@@ -88,11 +101,10 @@ public class Limelight extends SubsystemBase{
             candle.cameraClearColor();
 
         }
-
-        
- 
         SmartDashboard.putNumber("LL tag count", tags);
         SmartDashboard.putBoolean("LL has target", hasValidTarget());
+        SmartDashboard.putBoolean("LL2 has target", llResult2.tagCount>0);
+        SmartDashboard.putBoolean("LL2 null", llResult2 != null);
 
 
         if(llResult != null && llResult.rawFiducials != null && llResult.rawFiducials.length == 1) {
@@ -106,6 +118,9 @@ public class Limelight extends SubsystemBase{
 
     public boolean hasValidTarget(){
         return (llResult != null && llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0);
+    }
+    public boolean hasValidTarget2(){
+        return (llResult2 != null && llResult2.tagCount >= LimelightConstants.kMinTags && llResult2.rawFiducials != null && llResult2.rawFiducials.length > 0);
     }
     public int getNumTag() {
         return tags;
