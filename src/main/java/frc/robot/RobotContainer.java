@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.CANdleConfiguration;
 import com.ctre.phoenix6.controls.ColorFlowAnimation;
 import com.ctre.phoenix6.controls.EmptyAnimation;
@@ -91,6 +92,8 @@ public class RobotContainer {
         faceCenter.HeadingController.setPID(TrajectoryConstants.RotationalkP, TrajectoryConstants.RotationalkI, TrajectoryConstants.RotationalkD);
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
         
+        SignalLogger.setPath("/media/sda1/ctre-logs/");
+
         try{
             layout = new AprilTagFieldLayout(
                 "/home/lvuser/deploy/2025-reefscape.json"
