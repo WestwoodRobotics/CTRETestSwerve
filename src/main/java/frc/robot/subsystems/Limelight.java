@@ -37,8 +37,10 @@ public class Limelight extends SubsystemBase{
     public void periodic(){
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
-        tags = llResult.tagCount;
-
+        tags = 0;
+        if(llResult!= null){
+            tags = llResult.tagCount;
+        }
         if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
 
             llPose = llResult.pose;
