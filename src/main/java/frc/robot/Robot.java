@@ -9,6 +9,11 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.controls.SolidColor;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.StructLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -17,6 +22,8 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+
+  private StructLogEntry<Pose2d> poseLog;
 
   public Robot() {
     m_robotContainer = new RobotContainer();
@@ -30,20 +37,20 @@ public class Robot extends TimedRobot {
           System.out.println("Failed to play music" + e.getMessage());
           e.printStackTrace();
       }
-   
+      DataLogManager.start("/media/sda1");
+      DataLog log = DataLogManager.getLog();
+      poseLog = StructLogEntry.create(log, "/drivetrain/pose", Pose2d.struct);
+      DriverStation.startDataLog(DataLogManager.getLog());
+
   }
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run(); 
-     Pose2d robotPose = m_robotContainer.drivetrain.getState().Pose;
-    SignalLogger.writeDouble("RobotPoseX", robotPose.getX());
-    SignalLogger.writeDouble("RobotPoseY", robotPose.getY());
-    SignalLogger.writeDouble("RobotPoseRotation", robotPose.getRotation().getDegrees());
+  
   }
 
   @Override
   public void disabledInit() {
-    SignalLogger.stop();
   }
 
   @Override
@@ -72,15 +79,22 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-    SignalLogger.start();
    
+    
+
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    Pose2d robotPose = m_robotContainer.drivetrain.getState().Pose;
+    poseLog.append(robotPose);
+  }
 
   @Override
-  public void teleopExit() {}
+  public void teleopExit() {
+    DataLogManager.stop();
+
+  }
 
   @Override
   public void testInit() {

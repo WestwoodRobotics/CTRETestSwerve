@@ -8,6 +8,9 @@ import com.ctre.phoenix6.signals.RGBWColor;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.util.datalog.StructArrayLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -21,7 +24,10 @@ public class Limelight extends SubsystemBase{
 
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
+    private Pose3d targetResult;
+
     private int tags;
+    private StructArrayLogEntry<Pose3d> visionTargetsLog;
 
     public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
@@ -29,8 +35,12 @@ public class Limelight extends SubsystemBase{
 
         llPose = new Pose2d();
         llResult = new LimelightHelpers.PoseEstimate();
+        targetResult = new Pose3d();
         tags = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
+
+        var log = DataLogManager.getLog();
+        visionTargetsLog = StructArrayLogEntry.create(log, "/vision/targetPoses", Pose3d.struct);
     }
 
     @Override
@@ -38,22 +48,34 @@ public class Limelight extends SubsystemBase{
 
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
         tags = 0;
+        SmartDashboard.putBoolean("LL TV", LimelightHelpers.getTV(LimelightConstants.kName));
+        SmartDashboard.putNumber("LL tx", LimelightHelpers.getTX(LimelightConstants.kName));
+        SmartDashboard.putNumber("LL ty", LimelightHelpers.getTY(LimelightConstants.kName));
+        SmartDashboard.putNumber("LL ta", LimelightHelpers.getTA(LimelightConstants.kName));
+        
         if(llResult!= null){
             tags = llResult.tagCount;
         }
         if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
+            targetResult = LimelightHelpers.getTargetPose3d_RobotSpace(LimelightConstants.kName);
 
             llPose = llResult.pose;
-
+            visionTargetsLog.append(new Pose3d[]{targetResult});
+            SmartDashboard.putNumber("target coords x", targetResult.getX());
+            SmartDashboard.putNumber("target coords Y", targetResult.getY());
+            SmartDashboard.putNumber("target coords Z", targetResult.getZ());
 
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
                 && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
                 drivetrain.addVisionMeasurement(
                     llPose,
-                    llResult.timestampSeconds
+                    llResult.timestampSeconds,
+                    LimelightConstants.kStdDevs
                     );
 
             }
+        } else{
+            visionTargetsLog.append(new Pose3d[0]);
         }
  
         if (hasValidTarget()){

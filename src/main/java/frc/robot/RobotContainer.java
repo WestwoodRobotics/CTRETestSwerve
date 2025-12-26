@@ -81,7 +81,6 @@ public class RobotContainer {
 
         faceCenter.HeadingController.setPID(TrajectoryConstants.RotationalkP, TrajectoryConstants.RotationalkI, TrajectoryConstants.RotationalkD);
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
-        SignalLogger.setPath("/media/sda1/ctre-logs/");
 
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -104,7 +103,7 @@ public class RobotContainer {
                     double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
                     double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
                     
-                    return drive.withVelocityX((yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
+                    return drive.withVelocityX(-(yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
                     .withVelocityY(-(xMagnitude) * MaxSpeed) // Drive left with squared X (maintaining sign)
                     .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
                 }  
