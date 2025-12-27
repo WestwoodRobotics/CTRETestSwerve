@@ -1,20 +1,26 @@
 package frc.robot.subsystems;
 
+import java.lang.reflect.Field;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
 
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.util.datalog.StructArrayLogEntry;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.Constants.LimelightConstants;
 
 public class Limelight extends SubsystemBase{
@@ -24,8 +30,9 @@ public class Limelight extends SubsystemBase{
 
     private Pose2d llPose;
     private LimelightHelpers.PoseEstimate llResult;
-    private Pose3d targetResult;
-
+    private LimelightHelpers.LimelightResults results;
+    private Pose3d TargetPose;
+    private AprilTagFieldLayout layout;
     private int tags;
     private StructArrayLogEntry<Pose3d> visionTargetsLog;
 
@@ -35,9 +42,17 @@ public class Limelight extends SubsystemBase{
 
         llPose = new Pose2d();
         llResult = new LimelightHelpers.PoseEstimate();
-        targetResult = new Pose3d();
+        TargetPose = new Pose3d();
         tags = 0;
         LimelightHelpers.setPipelineIndex(LimelightConstants.kName, LimelightConstants.kPipelineIndex);
+
+        try {
+            this.layout = new AprilTagFieldLayout("/home/lvuser/deploy/2025-reefscape-welded.json");
+        } catch (java.io.IOException e) {
+            // Fallback to an empty layout if the file cannot be read
+            this.layout = new AprilTagFieldLayout(java.util.List.of(), 0.0, 0.0);
+            SmartDashboard.putString("LL layout error", e.getMessage());
+        }
 
         var log = DataLogManager.getLog();
         visionTargetsLog = StructArrayLogEntry.create(log, "/vision/targetPoses", Pose3d.struct);
@@ -45,26 +60,36 @@ public class Limelight extends SubsystemBase{
 
     @Override
     public void periodic(){
-
+        results = LimelightHelpers.getLatestResults(LimelightConstants.kName);
         llResult = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kName);
         tags = 0;
-        SmartDashboard.putBoolean("LL TV", LimelightHelpers.getTV(LimelightConstants.kName));
-        SmartDashboard.putNumber("LL tx", LimelightHelpers.getTX(LimelightConstants.kName));
-        SmartDashboard.putNumber("LL ty", LimelightHelpers.getTY(LimelightConstants.kName));
-        SmartDashboard.putNumber("LL ta", LimelightHelpers.getTA(LimelightConstants.kName));
-        
         if(llResult!= null){
             tags = llResult.tagCount;
         }
         if(llResult != null && llResult.tagCount >= LimelightConstants.kMinTags && llResult.rawFiducials != null && llResult.rawFiducials.length > 0 ) {
-            targetResult = LimelightHelpers.getTargetPose3d_RobotSpace(LimelightConstants.kName);
-
+            if(results.targets_Fiducials.length>0){
+                LimelightHelpers.LimelightTarget_Fiducial[] target = results.targets_Fiducials;
+                int id = (int) target[0].fiducialID;
+                var tagposeoptional = layout.getTagPose(id);
+                if(tagposeoptional.isPresent()){
+                    TargetPose = tagposeoptional.get();
+    
+                }
+            }
             llPose = llResult.pose;
-            visionTargetsLog.append(new Pose3d[]{targetResult});
-            SmartDashboard.putNumber("target coords x", targetResult.getX());
-            SmartDashboard.putNumber("target coords Y", targetResult.getY());
-            SmartDashboard.putNumber("target coords Z", targetResult.getZ());
+            
 
+
+
+            visionTargetsLog.append(new Pose3d[]{TargetPose});
+            double[] targetPoseArray = new double[] {
+                TargetPose.getX(), // X translation
+                TargetPose.getY(), // Y translation
+                TargetPose.getZ(), // Z translation
+                TargetPose.getRotation().toRotation2d().getRadians()
+            };
+            
+            SmartDashboard.putNumberArray("target", targetPoseArray);
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
                 && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
                 drivetrain.addVisionMeasurement(
