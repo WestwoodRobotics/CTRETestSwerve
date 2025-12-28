@@ -63,7 +63,10 @@ public final class Constants {
             kXyStdDev,
             kThetaStdDev);
 
-        public static final double kMaxAmbiguity = 0.2;
+        public static final double kMaxAmbiguityOdometry = 0.6;
+        public static final double kMaxAmbiguityGyro = 0.2;
+        public static final double kMaxAmbiguity = 0.9;
+
         public static final double kMaxDistance = 3.0;
         public static final int kMinTags = 1;
         public static final int kPipelineIndex = 0;
