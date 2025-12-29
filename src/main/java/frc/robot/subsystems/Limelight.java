@@ -35,6 +35,10 @@ public class Limelight extends SubsystemBase{
     private AprilTagFieldLayout layout;
     private int tags;
     private StructArrayLogEntry<Pose3d> visionTargetsLog;
+    
+    private Pose3d[] targetPoseArray = new Pose3d[1];
+    private Pose3d[] emptyPoseArray = new Pose3d[0];
+    private Double[] targetPoseArrayDashboard = new Double[4];
 
     public Limelight(CommandSwerveDrivetrain drivetrain, LED candle){
         this.drivetrain = drivetrain;
@@ -56,6 +60,9 @@ public class Limelight extends SubsystemBase{
 
         var log = DataLogManager.getLog();
         visionTargetsLog = StructArrayLogEntry.create(log, "/vision/targetPoses", Pose3d.struct);
+
+       
+
     }
 
     @Override
@@ -80,16 +87,16 @@ public class Limelight extends SubsystemBase{
             
 
 
-
-            visionTargetsLog.append(new Pose3d[]{TargetPose});
-            double[] targetPoseArray = new double[] {
-                TargetPose.getX(), // X translation
-                TargetPose.getY(), // Y translation
-                TargetPose.getZ(), // Z translation
-                TargetPose.getRotation().toRotation2d().getRadians()
-            };
+            targetPoseArray[0] = TargetPose;
+            visionTargetsLog.append(targetPoseArray);
             
-            SmartDashboard.putNumberArray("target", targetPoseArray);
+            targetPoseArrayDashboard[0] = TargetPose.getX(); // X translation
+            targetPoseArrayDashboard[1] = TargetPose.getY();// Y translation
+            targetPoseArrayDashboard[2] = TargetPose.getZ(); // Z translation
+            targetPoseArrayDashboard[3] = TargetPose.getRotation().toRotation2d().getRadians();
+        
+            
+            SmartDashboard.putNumberArray("target", targetPoseArrayDashboard);
             if(llResult.rawFiducials[0].ambiguity < LimelightConstants.kMaxAmbiguity
                 && llResult.rawFiducials[0].distToCamera < LimelightConstants.kMaxDistance) {
                 drivetrain.addVisionMeasurement(
@@ -100,7 +107,7 @@ public class Limelight extends SubsystemBase{
 
             }
         } else{
-            visionTargetsLog.append(new Pose3d[0]);
+            visionTargetsLog.append(emptyPoseArray);
         }
  
         if (hasValidTarget()){
@@ -119,6 +126,7 @@ public class Limelight extends SubsystemBase{
 
         if(llResult != null && llResult.rawFiducials != null && llResult.rawFiducials.length == 1) {
             SmartDashboard.putNumber("LL ambiguity", llResult.rawFiducials[0].ambiguity);
+            SmartDashboard.putNumber("ll distance", llResult.rawFiducials[0].distToCamera);
             SmartDashboard.putNumber("LL Estimated Pose X", llPose.getX());
             SmartDashboard.putNumber("LL Estimated Pose Y", llPose.getY());
             SmartDashboard.putNumber("LL Estimated Pose Theta", llPose.getRotation().getDegrees());

@@ -20,6 +20,11 @@ public class lockToCenter extends Command{
     private final DoubleSupplier radiusDoubleSupplier;
     private double MaxAngularRate;
     private double MaxSpeed;
+    
+    // Reuse these objects instead of creating new ones
+    private final Rotation2d targetAngle = new Rotation2d();
+    private final SwerveRequest.Idle idleRequest = new SwerveRequest.Idle();
+    
     public lockToCenter(CommandSwerveDrivetrain drivetrain, SwerveRequest.FieldCentricFacingAngle faceCenter, DoubleSupplier orbitDoubleSupplier, DoubleSupplier radiusDoubleSupplier, double maxAngleRate, double maxSpeed){
         this.drivetrain = drivetrain;
         this.faceCenter = faceCenter;
@@ -35,7 +40,13 @@ public class lockToCenter extends Command{
         Pose2d currentPose = drivetrain.getState().Pose;
         double dx = TrajectoryConstants.kCenterField.getX() - currentPose.getX();
         double dy = TrajectoryConstants.kCenterField.getY() - currentPose.getY();
-        Rotation2d targetAngle = new Rotation2d(Math.atan2(dy, dx) + Math.PI);
+        
+        // Reuse the targetAngle object by updating its value
+        double angleRadians = Math.atan2(dy, dx) + Math.PI;
+        // Note: Rotation2d is immutable, so we need to create a new one
+        // But we can minimize allocations in other ways
+        Rotation2d calculatedAngle = Rotation2d.fromRadians(angleRadians);
+        
         double radius = Math.hypot(dx, dy);
         
         double input = orbitDoubleSupplier.getAsDouble();
@@ -50,7 +61,6 @@ public class lockToCenter extends Command{
         double angularRate = MaxAngularRate * input;
         double tangentialSpeed = angularRate * radius;
         
-
         double radiusSpeed = radiusinput * MaxSpeed;
        
         double vx = tangentUx*tangentialSpeed + radiusUx*radiusSpeed;
@@ -63,20 +73,18 @@ public class lockToCenter extends Command{
             vy *= scale;
         }
 
-        SmartDashboard.putNumber("Target angle degrees", targetAngle.getDegrees());
-        SmartDashboard.putNumber("Angle error degrees", targetAngle.minus(currentPose.getRotation()).getDegrees());
+        SmartDashboard.putNumber("Target angle degrees", calculatedAngle.getDegrees());
+        SmartDashboard.putNumber("Angle error degrees", calculatedAngle.minus(currentPose.getRotation()).getDegrees());
         
         drivetrain.setControl(faceCenter
-        .withTargetDirection(targetAngle)
-        .withVelocityX(vx)
-        .withVelocityY(vy)
+            .withTargetDirection(calculatedAngle)
+            .withVelocityX(vx)
+            .withVelocityY(vy)
         );
-
-
     }
 
     @Override
     public void end(boolean interrupted) {
-        drivetrain.setControl(new SwerveRequest.Idle());
+        drivetrain.setControl(idleRequest);  // Reuse the idle request
     }
 }

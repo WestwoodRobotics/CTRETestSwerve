@@ -25,6 +25,7 @@ public class Robot extends TimedRobot {
   private final RobotContainer m_robotContainer;
 
   private StructLogEntry<Pose2d> poseLog;
+  private Pose2d cachedPose = new Pose2d();
 
   public Robot() {
     m_robotContainer = new RobotContainer();
@@ -87,13 +88,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    Pose2d robotPose = m_robotContainer.drivetrain.getState().Pose;
-    poseLog.append(robotPose);
+    cachedPose = m_robotContainer.drivetrain.getState().Pose;
+    poseLog.append(cachedPose);
   }
 
   @Override
   public void teleopExit() {
-    DataLogManager.stop();
 
   }
 
