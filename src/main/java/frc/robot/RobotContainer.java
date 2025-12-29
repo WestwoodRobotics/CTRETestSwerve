@@ -40,6 +40,7 @@ import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.commands.swerve.followObject;
 import frc.robot.commands.swerve.lockToCenter;
+import frc.robot.commands.vision.PhotonDefault;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
@@ -94,7 +95,8 @@ public class RobotContainer {
         
         try{
               layout = new AprilTagFieldLayout("/home/lvuser/deploy/2025-reefscape.json");
-            limelight = new PhotonVisionCamera(drivetrain, led, layout);
+            limelight = new PhotonVisionCamera(led, layout);
+            limelight.setDefaultCommand(new PhotonDefault(limelight, drivetrain));
         }
         catch(Exception exc){
             limelight = null;
