@@ -57,18 +57,22 @@ public final class Constants {
         public static final String kLimelightTwo = "limelight-two";
 
         public static final double kXyStdDev = 0.2;
-        public static final double kThetaStdDev = Math.toRadians(10);
+        public static final double kThetaStdDev = 0;
         public static final Matrix<N3, N1> kStdDevs = VecBuilder.fill(
             kXyStdDev,
             kXyStdDev,
             kThetaStdDev);
 
-        public static final double kMaxAmbiguityOdometry = 0.6;
-        public static final double kMaxAmbiguityGyro = 0.2;
         public static final double kMaxAmbiguity = 0.9;
+        public static final double kMinAreaOdom = 0.0;
+        public static final double kMinAreaGyro = 50.0;
 
-        public static final double kMaxDistance = 3.0;
+        public static final double kMaxDistance = 3000.0;
         public static final int kMinTags = 1;
         public static final int kPipelineIndex = 0;
+
+        public static final double kMaxTranslationalVelocity = 9.0; // meters per second
+        public static final double kMaxRotationalVelocity = 360; // degrees per second
+
     }
 }

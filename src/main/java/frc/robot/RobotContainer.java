@@ -40,6 +40,7 @@ import frc.robot.commands.swerve.FollowTrajectory;
 import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.commands.swerve.followObject;
 import frc.robot.commands.swerve.lockToCenter;
+import frc.robot.commands.vision.AutoAlign;
 import frc.robot.commands.vision.PhotonDefault;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -151,7 +152,8 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
  */
         // reset the field-centric heading on left bumper press
-        joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
+/*         joystick.rightBumper().whileTrue(new FollowTrajectory(drivetrain));
+ */        
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
 
@@ -160,8 +162,15 @@ public class RobotContainer {
         () -> joystick.getLeftY(), 
         MaxAngularRate,
         MaxSpeed));
- */
-        joystick.rightTrigger().whileTrue(new followObject(drivetrain, faceObject, 
+ */     
+        joystick.y().whileTrue(
+        new InstantCommand(() -> {
+            var endPose = limelight.getPoseOne(); // returns null if no target
+            if (endPose != null) {
+                new AutoAlign(drivetrain, endPose).schedule();
+            }
+        }));
+         joystick.rightTrigger().whileTrue(new followObject(drivetrain, faceObject, 
         joystick, 
         TrajectoryConstants.kMaxSpeed, MaxAngularRate));
         // drive forward at full speed on dpad up

@@ -37,10 +37,15 @@ public class PhotonVisionCamera extends SubsystemBase{
     private PhotonPipelineResult PVresultTwo;
     private AprilTagFieldLayout layout;
     private int tags;
-    private Transform3d cameraToRobot = new Transform3d(
-    new Translation3d(0.5, 0.0, 0.1),  // X, Y, Z in meters
+    private Transform3d cameraToRobotOne = new Transform3d(
+    new Translation3d(0.42, 0.0, 0.5),  // X, Y, Z in meters
     new Rotation3d(0, 0, 0)  // Roll, Pitch, Yaw in radians
     );
+    private Transform3d cameraToRobotTwo = new Transform3d(
+        new Translation3d(-0.42, 0.0, 0.5),  // X, Y, Z in meters
+        new Rotation3d(0, 0, Math.PI)  // Roll, Pitch, Yaw in radians
+        );
+
 
 
     public PhotonVisionCamera(LED candle, AprilTagFieldLayout layout){
@@ -56,9 +61,12 @@ public class PhotonVisionCamera extends SubsystemBase{
     public void periodic(){
         SmartDashboard.putBoolean("Camera Connected", cameraOne.isConnected());
         SmartDashboard.putBoolean("Result Not Null", PVresult != null);
+        SmartDashboard.putBoolean("Camera Connected", cameraOne.isConnected());
 
         PVresult = cameraOne.getLatestResult();
         PVresultTwo = cameraTwo.getLatestResult();
+        SmartDashboard.putBoolean("targets one", PVresult.hasTargets());
+        SmartDashboard.putBoolean("targets two", PVresultTwo.hasTargets());
 
         tags = PVresult.getTargets().size() + PVresultTwo.getTargets().size();
 
@@ -82,8 +90,30 @@ public class PhotonVisionCamera extends SubsystemBase{
         return PVresultTwo;
     }
 
-    public Transform3d getCamToRobot(){
-        return cameraToRobot;
+    public Pose2d getPoseOne(){
+        if (PVresultTwo == null || !PVresultTwo.hasTargets()) {
+            return null;
+        }
+        PhotonTrackedTarget bestTarget = PVresultTwo.getBestTarget();
+        if (bestTarget == null) {
+            return null;
+        }
+        int tagId = bestTarget.getFiducialId();
+        Optional<Pose3d> tagPoseOpt = layout.getTagPose(tagId);
+        if (tagPoseOpt.isEmpty()) {
+            return null;
+        }
+        Pose2d camPose = PhotonUtils.estimateFieldToRobotAprilTag(
+                bestTarget.getBestCameraToTarget(), tagPoseOpt.get(), cameraToRobotTwo).toPose2d();
+        return camPose;
+    }
+    public Transform3d getCamToRobotOne(){
+        return cameraToRobotOne;
+    }
+
+    
+    public Transform3d getCamToRobotTwo(){
+        return cameraToRobotTwo;
     }
 
     public AprilTagFieldLayout getLayout(){
@@ -96,9 +126,5 @@ public class PhotonVisionCamera extends SubsystemBase{
     public int getNumTag() {
         return tags;
     }
-    public Pose2d getEstimatedPose() {
-        Pose2d fieldPose = layout.getTagPose(PVresult.getBestTarget().getFiducialId()).orElse(new Pose3d()).toPose2d();
-        return fieldPose;
-        
-    }
+   
 }
