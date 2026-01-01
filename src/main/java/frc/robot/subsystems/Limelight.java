@@ -27,20 +27,24 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.Constants.LimelightConstants;
 
-public class PhotonVisionCamera extends SubsystemBase{
+public class Limelight extends SubsystemBase{
     
     private LED candle;
+    private LimelightHelpers.PoseEstimate llResult;
+    private LimelightHelpers.PoseEstimate llResultTwo;
 
-    private PhotonCamera cameraOne;
-    private PhotonCamera cameraTwo;    
-    private PhotonPipelineResult PVresult;
-    private PhotonPipelineResult PVresultTwo;
+    private LimelightHelpers.LimelightResults results;
+    private LimelightHelpers.LimelightResults resultsTwo;
+
+    private Pose3d targetPoseOne;
+    private Pose3d targetPoseTwo;
+
     private AprilTagFieldLayout layout;
     private int tags;
     private Transform3d cameraToRobotOne = new Transform3d(
-    new Translation3d(0.42, 0.0, 0.5),  // X, Y, Z in meters
-    new Rotation3d(0, 0, 0)  // Roll, Pitch, Yaw in radians
-    );
+        new Translation3d(0.42, 0.0, 0.5),  // X, Y, Z in meters
+        new Rotation3d(0, 0, 0)  // Roll, Pitch, Yaw in radians
+        );
     private Transform3d cameraToRobotTwo = new Transform3d(
         new Translation3d(-0.42, 0.0, 0.5),  // X, Y, Z in meters
         new Rotation3d(0, 0, Math.PI)  // Roll, Pitch, Yaw in radians
@@ -48,13 +52,20 @@ public class PhotonVisionCamera extends SubsystemBase{
 
 
 
-    public PhotonVisionCamera(LED candle, AprilTagFieldLayout layout){
+    public Limelight(LED candle, AprilTagFieldLayout layout){
         this.candle = candle;
-        this.cameraOne = new PhotonCamera("cameraone");
-        this.cameraTwo = new PhotonCamera("cameratwo");
-        this.PVresult = null;
-        this.PVresultTwo = null;
-        this.layout = layout;
+
+        this.llResult = new LimelightHelpers.PoseEstimate();
+        this.llResultTwo =  new LimelightHelpers.PoseEstimate();
+
+        this.targetPoseOne = new Pose3d();
+        this.targetPoseTwo = new Pose3d();
+
+        this.tags = 0;
+
+        try{
+            this.layout = new AprilTagFieldLayout("/home/lvuser/deploy/2025-");
+        }
     }
 
     @Override
