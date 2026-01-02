@@ -297,6 +297,7 @@ public class PhotonDefault extends Command{
         double basethetaStdDev = LimelightConstants.kThetaStdDev;
 
         double areafactor = 1.0;
+        
         if (totalArea > LimelightConstants.kMinAreaGyro) {
             // Good area: scale between 0.1 and 0.5
             areafactor = 0.5 - (0.4 * Math.min(totalArea / 20.0, 1.0)); // Assumes max useful area ~20%
