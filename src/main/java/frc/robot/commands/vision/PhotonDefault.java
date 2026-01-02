@@ -7,10 +7,13 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -60,7 +63,7 @@ public class PhotonDefault extends Command{
         if(hasTargetsOne && !hasTargetsTwo) {
             processSingleCam(llResultOne);
             if(resultsOne.targets_Fiducials.length >0){
-                
+
                 LimelightHelpers.LimelightTarget_Fiducial[] target = resultsOne.targets_Fiducials;
                 
                 int id = (int) target[0].fiducialID;
@@ -109,10 +112,11 @@ public class PhotonDefault extends Command{
         Pose2d robotPose = llResult.pose;
         cachedRobotPose = drivetrain.getState().Pose;
 
-
         double translationalVelocity = Math.hypot(drivetrain.getState().Speeds.vxMetersPerSecond, drivetrain.getState().Speeds.vyMetersPerSecond);
         double rotationalVelocity = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
         
+        Matrix<N3, N1> stdDevs = calculateDynamicStdDevs(totalArea, translationalVelocity, rotationalVelocity);
+
         double poseDistance = cachedRobotPose.getTranslation().getDistance(robotPose.getTranslation());
         SmartDashboard.putNumber("distance", poseDistance);
         double rotationdiffrence = Math.abs(cachedRobotPose.getRotation().minus(robotPose.getRotation()).getDegrees());
@@ -130,7 +134,7 @@ public class PhotonDefault extends Command{
             drivetrain.addVisionMeasurement(
                 combinedPose,
                 llResult.timestampSeconds,   
-                LimelightConstants.kStdDevs
+                stdDevs
                 );
         
         }
@@ -145,7 +149,7 @@ public class PhotonDefault extends Command{
             drivetrain.addVisionMeasurement(
                 robotPose,
                 llResult.timestampSeconds,
-                LimelightConstants.kStdDevs
+                stdDevs
                 );
         
         }
@@ -159,13 +163,10 @@ public class PhotonDefault extends Command{
 
     public void processDoubleCam(LimelightHelpers.PoseEstimate llResult, LimelightHelpers.PoseEstimate llResultTwo){
 
-        if (llResult.rawFiducials == null || llResult.rawFiducials.length == 0 ||
-        llResultTwo.rawFiducials == null || llResultTwo.rawFiducials.length == 0) {
-            return;
-        }
+        processSingleCam(llResult);
+        processSingleCam(llResultTwo);
 
-
-        cachedRobotPose = drivetrain.getState().Pose;
+      /*   cachedRobotPose = drivetrain.getState().Pose;
 
 
         double areaOne = getTotalTagArea(llResult);
@@ -267,7 +268,7 @@ public class PhotonDefault extends Command{
             combinedPose,
             (llResult.timestampSeconds + llResultTwo.timestampSeconds) / 2.0,
             LimelightConstants.kStdDevs
-        );
+        ); */
     }
 
     
@@ -289,7 +290,7 @@ public class PhotonDefault extends Command{
         return totalArea;
     }
 
-    /* private edu.wpi.first.math.Matrix<edu.wpi.first.math.numbers.N3, edu.wpi.first.math.numbers.N1> calculateDynamicStdDevs(
+     private edu.wpi.first.math.Matrix<edu.wpi.first.math.numbers.N3, edu.wpi.first.math.numbers.N1> calculateDynamicStdDevs(
         double totalArea, double translationalVelocity, double rotationalVelocity) {
         
         double basexyStdDev = LimelightConstants.kXyStdDev;
@@ -315,6 +316,6 @@ public class PhotonDefault extends Command{
         double thetaStdDev = basethetaStdDev * areafactor * rotVelFactor;
 
         return edu.wpi.first.math.VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev);
-    } */
+    } 
     
 }
