@@ -45,7 +45,7 @@ import frc.robot.commands.vision.PhotonDefault;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
-import frc.robot.subsystems.PhotonVisionCamera;
+import frc.robot.subsystems.Limelight;
 import edu.wpi.first.wpilibj.util.Color;
 
 
@@ -78,14 +78,13 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    private AprilTagFieldLayout layout;
 
     //public CANdle candle = new CANdle(50, "SwerveCAN");
     public LED led = new LED(50, "SwerveCAN");
     private final SendableChooser<Command> autoChooser;
     
     public Orchestrate music = new Orchestrate(drivetrain, orchestra, "/home/lvuser/deploy/hi.chrp");
-    private PhotonVisionCamera limelight;
+    private Limelight limelight;
 
 
     public RobotContainer() {
@@ -93,17 +92,13 @@ public class RobotContainer {
 
         faceCenter.HeadingController.setPID(TrajectoryConstants.RotationalkP, TrajectoryConstants.RotationalkI, TrajectoryConstants.RotationalkD);
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
-        
         try{
-              layout = new AprilTagFieldLayout("/home/lvuser/deploy/2025-reefscape.json");
-            limelight = new PhotonVisionCamera(led, layout);
+            limelight = new Limelight(led);
             limelight.setDefaultCommand(new PhotonDefault(limelight, drivetrain));
-        }
-        catch(Exception exc){
+        } catch(Exception exc){
             limelight = null;
-
-        };
-
+        }
+        
         configureBindings();
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
@@ -165,7 +160,7 @@ public class RobotContainer {
  */     
         joystick.y().whileTrue(
         new InstantCommand(() -> {
-            var endPose = limelight.getPoseOne(); // returns null if no target
+            var endPose = limelight.getCamOneResult().pose; // returns null if no target
             if (endPose != null) {
                 new AutoAlign(drivetrain, endPose).schedule();
             }

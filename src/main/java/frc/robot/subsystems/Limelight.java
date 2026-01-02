@@ -30,33 +30,21 @@ import frc.robot.Constants.LimelightConstants;
 public class Limelight extends SubsystemBase{
     
     private LED candle;
-    private LimelightHelpers.PoseEstimate llResult;
-    private LimelightHelpers.PoseEstimate llResultTwo;
 
-    private LimelightHelpers.LimelightResults results;
-    private LimelightHelpers.LimelightResults resultsTwo;
+    private LimelightHelpers.PoseEstimate results;
+    private LimelightHelpers.PoseEstimate resultsTwo;
 
     private Pose3d targetPoseOne;
     private Pose3d targetPoseTwo;
 
     private AprilTagFieldLayout layout;
     private int tags;
-    private Transform3d cameraToRobotOne = new Transform3d(
-        new Translation3d(0.42, 0.0, 0.5),  // X, Y, Z in meters
-        new Rotation3d(0, 0, 0)  // Roll, Pitch, Yaw in radians
-        );
-    private Transform3d cameraToRobotTwo = new Transform3d(
-        new Translation3d(-0.42, 0.0, 0.5),  // X, Y, Z in meters
-        new Rotation3d(0, 0, Math.PI)  // Roll, Pitch, Yaw in radians
-        );
 
 
-
-    public Limelight(LED candle, AprilTagFieldLayout layout){
+    public Limelight(LED candle){
         this.candle = candle;
 
-        this.llResult = new LimelightHelpers.PoseEstimate();
-        this.llResultTwo =  new LimelightHelpers.PoseEstimate();
+    
 
         this.targetPoseOne = new Pose3d();
         this.targetPoseTwo = new Pose3d();
@@ -64,76 +52,61 @@ public class Limelight extends SubsystemBase{
         this.tags = 0;
 
         try{
-            this.layout = new AprilTagFieldLayout("/home/lvuser/deploy/2025-");
+            this.layout = new AprilTagFieldLayout("/home/lvuser/deploy/2025-reefscape-welded.json");
+        } catch(java.io.IOException e){
+            this.layout = new AprilTagFieldLayout(java.util.List.of(), 0.0, 0.0);
+            SmartDashboard.putString("LL layout error", e.getMessage());
         }
+        LimelightHelpers.setPipelineIndex(LimelightConstants.kLimelightOne, LimelightConstants.kPipelineIndex);
+        LimelightHelpers.setPipelineIndex(LimelightConstants.kLimelightTwo, LimelightConstants.kPipelineIndex);
+
     }
 
     @Override
     public void periodic(){
-        SmartDashboard.putBoolean("Camera Connected", cameraOne.isConnected());
-        SmartDashboard.putBoolean("Result Not Null", PVresult != null);
-        SmartDashboard.putBoolean("Camera Connected", cameraOne.isConnected());
+        results = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kLimelightOne);
+        resultsTwo = LimelightHelpers.getBotPoseEstimate_wpiBlue(LimelightConstants.kLimelightTwo);
 
-        PVresult = cameraOne.getLatestResult();
-        PVresultTwo = cameraTwo.getLatestResult();
-        SmartDashboard.putBoolean("targets one", PVresult.hasTargets());
-        SmartDashboard.putBoolean("targets two", PVresultTwo.hasTargets());
 
-        tags = PVresult.getTargets().size() + PVresultTwo.getTargets().size();
+        SmartDashboard.putBoolean("Camera Connected", results != null);
+        SmartDashboard.putBoolean("Camera Two Connected", resultsTwo != null);
+
+
+        
+        tags = 0;
+        if (results != null) {
+            tags += results.tagCount;
+        }
+        if (resultsTwo != null) {
+            tags += resultsTwo.tagCount;
+        }
 
         SmartDashboard.putNumber("tag count", tags);
 
-        if (hasValidTarget()){
+       /*  if (hasValidTarget()){
 
             candle.cameraSetColor(Color.kGreen, 1);
         }
         else {
             candle.cameraClearColor();       
 
-        }
+        } */
        
     }
 
-    public PhotonPipelineResult getCamOneResult(){
-        return PVresult;
+    public LimelightHelpers.PoseEstimate getCamOneResult(){
+        return results;
     }
-    public PhotonPipelineResult getCamTwoResult(){
-        return PVresultTwo;
-    }
-
-    public Pose2d getPoseOne(){
-        if (PVresultTwo == null || !PVresultTwo.hasTargets()) {
-            return null;
-        }
-        PhotonTrackedTarget bestTarget = PVresultTwo.getBestTarget();
-        if (bestTarget == null) {
-            return null;
-        }
-        int tagId = bestTarget.getFiducialId();
-        Optional<Pose3d> tagPoseOpt = layout.getTagPose(tagId);
-        if (tagPoseOpt.isEmpty()) {
-            return null;
-        }
-        Pose2d camPose = PhotonUtils.estimateFieldToRobotAprilTag(
-                bestTarget.getBestCameraToTarget(), tagPoseOpt.get(), cameraToRobotTwo).toPose2d();
-        return camPose;
-    }
-    public Transform3d getCamToRobotOne(){
-        return cameraToRobotOne;
+    public LimelightHelpers.PoseEstimate getCamTwoResult(){
+        return resultsTwo;
     }
 
-    
-    public Transform3d getCamToRobotTwo(){
-        return cameraToRobotTwo;
-    }
+
 
     public AprilTagFieldLayout getLayout(){
         return layout;
     }
 
-    public boolean hasValidTarget(){
-        return (PVresult != null && tags >= LimelightConstants.kMinTags);
-    }
     public int getNumTag() {
         return tags;
     }

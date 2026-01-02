@@ -53,11 +53,11 @@ public final class Constants {
     
 
     public static final class LimelightConstants {
-        public static final String kLimelightOne = "limelight-one";
+        public static final String kLimelightOne = "limelight";
         public static final String kLimelightTwo = "limelight-two";
 
         public static final double kXyStdDev = 0.2;
-        public static final double kThetaStdDev = 0;
+        public static final double kThetaStdDev = 3;
         public static final Matrix<N3, N1> kStdDevs = VecBuilder.fill(
             kXyStdDev,
             kXyStdDev,
@@ -65,7 +65,10 @@ public final class Constants {
 
         public static final double kMaxAmbiguity = 0.9;
         public static final double kMinAreaOdom = 0.0;
-        public static final double kMinAreaGyro = 50.0;
+        public static final double kMinAreaGyro = 0.2;
+
+        public static final double kMaxPoseDistance = 10;
+        public static final double kMaxRotationDifference = 1000000.0; // degrees
 
         public static final double kMaxDistance = 3000.0;
         public static final int kMinTags = 1;

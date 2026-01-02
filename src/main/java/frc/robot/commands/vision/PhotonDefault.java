@@ -14,222 +14,307 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.LimelightHelpers;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.PhotonVisionCamera;
+import frc.robot.subsystems.Limelight;
 
 public class PhotonDefault extends Command{
-    private final PhotonVisionCamera vision;
+    private final Limelight vision;
     private final CommandSwerveDrivetrain drivetrain;
-    private final AprilTagFieldLayout layout;
-    private final Transform3d cameraToRobotOne;
-    private final Transform3d cameraToRobotTwo;
     private Pose2d combinedPose = new Pose2d();
     private Pose2d cachedRobotPose = new Pose2d();
     private Rotation2d finalrotation = new Rotation2d();
+    private LimelightHelpers.LimelightResults resultsOne;
+    private LimelightHelpers.LimelightResults resultsTwo;
+    private Pose3d targetPoseOne = new Pose3d();
+    private Pose3d targetPoseTwo = new Pose3d();
+    private Double[] targetPoseArrayDashboard = new Double[4];
 
-    public PhotonDefault(PhotonVisionCamera camera, CommandSwerveDrivetrain drivetrain){
+    public PhotonDefault(Limelight camera, CommandSwerveDrivetrain drivetrain){
         this.vision = camera;
         this.drivetrain = drivetrain;
-        this.layout = camera.getLayout();
-        this.cameraToRobotOne = camera.getCamToRobotOne();
-        this.cameraToRobotTwo = camera.getCamToRobotTwo();
         addRequirements(camera);
     }
 
     @Override
     public void execute(){
-        PhotonPipelineResult PVresult = vision.getCamOneResult();
-        PhotonPipelineResult PVresultTwo = vision.getCamTwoResult();
-        SmartDashboard.putBoolean("pv one target", PVresult.hasTargets());
-        SmartDashboard.putBoolean("pv two target", PVresultTwo.hasTargets());
+        LimelightHelpers.PoseEstimate llResultOne = vision.getCamOneResult();
+        LimelightHelpers.PoseEstimate llResultTwo = vision.getCamTwoResult();
 
-        if(PVresult == null || PVresultTwo == null){
-            return;
-        }
+        resultsOne = LimelightHelpers.getLatestResults(LimelightConstants.kLimelightOne);
+        resultsTwo = LimelightHelpers.getLatestResults(LimelightConstants.kLimelightTwo);
+
+       
+
+        boolean hasTargetsOne = llResultOne != null && llResultOne.tagCount > 0;
+        boolean hasTargetsTwo = llResultTwo != null && llResultTwo.tagCount > 0;
+
+        SmartDashboard.putBoolean("pv one target", hasTargetsOne);
+        SmartDashboard.putBoolean("pv two target", hasTargetsTwo);
+
+        SmartDashboard.putBoolean("result null", llResultOne != null);
+        SmartDashboard.putBoolean("result null 2", llResultTwo != null);
+
         // CAM ONE can see tag, CAM TWO cannot
-        if(PVresult.hasTargets() && !PVresultTwo.hasTargets()) {
-            processSingleCam(PVresult, cameraToRobotOne);
+        if(hasTargetsOne && !hasTargetsTwo) {
+            processSingleCam(llResultOne);
+            if(resultsOne.targets_Fiducials.length >0){
+                
+                LimelightHelpers.LimelightTarget_Fiducial[] target = resultsOne.targets_Fiducials;
+                
+                int id = (int) target[0].fiducialID;
+        
+                var tagposeoptional = vision.getLayout().getTagPose(id);
+        
+                if(tagposeoptional.isPresent()){
+                    targetPoseOne = tagposeoptional.get();
+        
+                }
+                targetPoseArrayDashboard[0] = targetPoseOne.getX(); // X translation
+                targetPoseArrayDashboard[1] = targetPoseOne.getY();// Y translation
+                targetPoseArrayDashboard[2] = targetPoseOne.getZ(); // Z translation
+                targetPoseArrayDashboard[3] = targetPoseOne.getRotation().toRotation2d().getRadians();
+
+                SmartDashboard.putNumberArray("target", targetPoseArrayDashboard);
+            }
         }   
         
         // CAM TWO can see tag, CAM ONE cannot
-        else if(PVresultTwo.hasTargets() && !PVresult.hasTargets()) {
-            processSingleCam(PVresultTwo, cameraToRobotTwo);
+        else if(!hasTargetsOne && hasTargetsTwo) {
+            processSingleCam(llResultTwo);
         }
         
         //CAM TWO AND CAM ONE can see tags
-        else if(PVresultTwo.hasTargets() && PVresult.hasTargets()){
-            processDoubleCam(PVresult, PVresultTwo);
+        else if(hasTargetsOne && hasTargetsTwo){
+            processDoubleCam(llResultOne, llResultTwo);
         }
     }
 
 
 
 
-    public void processSingleCam(PhotonPipelineResult PVresult, Transform3d cameraToRobot){
+    public void processSingleCam(LimelightHelpers.PoseEstimate llResult){
+        SmartDashboard.putBoolean("rawfid", llResult.rawFiducials !=null);
 
-        PhotonTrackedTarget bestTarget = PVresult.getBestTarget();
-        int tagId = bestTarget.getFiducialId();
-        Optional<Pose3d> tagPoseOpt = layout.getTagPose(tagId);
-        
-        if(tagPoseOpt.isPresent()){
-        
-            Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(
-                bestTarget.getBestCameraToTarget(), tagPoseOpt.get(), cameraToRobot);
-            cachedRobotPose = drivetrain.getState().Pose;
-            double distance = PhotonUtils.getDistanceToPose(cachedRobotPose, tagPoseOpt.get().toPose2d());
-            double translationalVelocity = Math.hypot(drivetrain.getState().Speeds.vxMetersPerSecond, drivetrain.getState().Speeds.vyMetersPerSecond);
-            double rotationalVelocity = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
-            SmartDashboard.putNumber("area", bestTarget.area);
-            if(distance < LimelightConstants.kMaxDistance /* 
-            && bestTarget.area > LimelightConstants.kMinAreaOdom
-            && bestTarget.area < LimelightConstants.kMinAreaGyro */
-            && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
-            && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity) {
-
-                combinedPose = new Pose2d(
-                    robotPose.getX(),robotPose.getY(), cachedRobotPose.getRotation()
-                );
-
-                drivetrain.addVisionMeasurement(
-                    combinedPose,
-                    PVresult.getTimestampSeconds(),   
-                    LimelightConstants.kStdDevs
-                    );
-            
-            }
-
-            else if(distance < LimelightConstants.kMaxDistance
-             && bestTarget.area > LimelightConstants.kMinAreaGyro
-             && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
-             && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity) {
-
-
-                drivetrain.addVisionMeasurement(
-                    robotPose.toPose2d(),
-                    PVresult.getTimestampSeconds(),   
-                    LimelightConstants.kStdDevs
-                    );
-            
-            }
+        if (llResult.rawFiducials == null || llResult.rawFiducials.length == 0) {
+            return;
         }
+
+       
+        double totalArea = getTotalTagArea(llResult);
+
+        SmartDashboard.putNumber("area", totalArea);
+
+        Pose2d robotPose = llResult.pose;
+        cachedRobotPose = drivetrain.getState().Pose;
+
+
+        double translationalVelocity = Math.hypot(drivetrain.getState().Speeds.vxMetersPerSecond, drivetrain.getState().Speeds.vyMetersPerSecond);
+        double rotationalVelocity = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
         
-    }
-
-
-
-
-
-    public void processDoubleCam(PhotonPipelineResult PVresult, PhotonPipelineResult PVresultTwo){
-        PhotonTrackedTarget bestTargetOne = PVresult.getBestTarget();
-        int tagIdOne = bestTargetOne.getFiducialId();
-        Optional<Pose3d> tagPoseOptOne = layout.getTagPose(tagIdOne);
-
-        PhotonTrackedTarget bestTargetTwo = PVresultTwo.getBestTarget();
-        int tagIdTwo = bestTargetTwo.getFiducialId();
-        Optional<Pose3d> tagPoseOptTwo = layout.getTagPose(tagIdTwo);
-
-        if(tagPoseOptOne.isPresent() && tagPoseOptTwo.isPresent()){
-            cachedRobotPose = drivetrain.getState().Pose;
-
-            double distanceOne =  PhotonUtils.getDistanceToPose(cachedRobotPose, tagPoseOptOne.get().toPose2d());
-            double distanceTwo =  PhotonUtils.getDistanceToPose(cachedRobotPose, tagPoseOptTwo.get().toPose2d());
-
-            double normalizedDistanceOne = 1 - Math.min((distanceOne / LimelightConstants.kMaxDistance), 1.0);
-            double normalizedDistanceTwo = 1 - Math.min((distanceTwo / LimelightConstants.kMaxDistance), 1.0);
-
-            double areaOne = bestTargetOne.area;
-            double areaTwo = bestTargetTwo.area;
-
-            double confidenceOne = normalizedDistanceOne * (areaOne / 100);
-            double confidenceTwo = normalizedDistanceTwo * (areaTwo / 100);
-
-            double totalConfidence = confidenceOne + confidenceTwo;
-
-            double weightOne = confidenceOne / totalConfidence;
-            double weightTwo = confidenceTwo / totalConfidence;
-
-            Pose3d robotPoseOne = PhotonUtils.estimateFieldToRobotAprilTag(
-                bestTargetOne.getBestCameraToTarget(), tagPoseOptOne.get(), cameraToRobotOne);
-            Pose3d robotPoseTwo = PhotonUtils.estimateFieldToRobotAprilTag(
-                bestTargetTwo.getBestCameraToTarget(), tagPoseOptTwo.get(), cameraToRobotTwo);
-
-
-            boolean updategyroOne = bestTargetOne.area > LimelightConstants.kMinAreaGyro;
-            boolean updategyroTwo = bestTargetTwo.area > LimelightConstants.kMinAreaGyro;
-
-            double translationalVelocity = Math.hypot(drivetrain.getState().Speeds.vxMetersPerSecond, drivetrain.getState().Speeds.vyMetersPerSecond);
-            double rotationalVelocity = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
-            
-            //if the CAM ONE ambiguity is in the gyro update range but CAM TWO ambiguity is not, use CAM ONE for gyro
-            if(distanceOne < LimelightConstants.kMaxDistance 
-            && distanceTwo < LimelightConstants.kMaxDistance 
-            && updategyroOne && !(updategyroTwo)
-            && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
-            && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
-                
-                finalrotation = robotPoseOne.toPose2d().getRotation();
-                
-            }
-
-            //if the CAM TWO ambiguity is in the gyro update range but CAM ONE ambiguity is not, use CAM TWO for gyro
-
-            else if(distanceOne < LimelightConstants.kMaxDistance 
-            && distanceTwo < LimelightConstants.kMaxDistance 
-            && !(updategyroOne) && updategyroTwo
-            && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
-            && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
-                
-                finalrotation = robotPoseTwo.toPose2d().getRotation();
-
-            }
-
-            //if the CAM TWO ambiguity is in the gyro update range AND CAM ONE ambiguity is in the gyro update range, combine the rotations for gyro
-
-
-            else if(distanceOne < LimelightConstants.kMaxDistance 
-            && distanceTwo < LimelightConstants.kMaxDistance 
-            && updategyroOne && updategyroTwo
-            && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
-            && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
-                
-                finalrotation = robotPoseOne.toPose2d().getRotation().interpolate(robotPoseTwo.toPose2d().getRotation(), weightTwo);
-
-              
-
-            } 
-            
-            
-            //if the CAM TWO ambiguity is NOT in the gyro update range AND CAM ONE ambiguity is NOT 
-            //in the gyro update range, dont update gyro
-
-            
-            else if (distanceOne < LimelightConstants.kMaxDistance 
-            && distanceTwo < LimelightConstants.kMaxDistance 
-            && !updategyroOne && !updategyroTwo
-            && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
-            && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
-                finalrotation = drivetrain.getState().RawHeading;
-            }
+        double poseDistance = cachedRobotPose.getTranslation().getDistance(robotPose.getTranslation());
+        SmartDashboard.putNumber("distance", poseDistance);
+        double rotationdiffrence = Math.abs(cachedRobotPose.getRotation().minus(robotPose.getRotation()).getDegrees());
+        
+        if( totalArea > LimelightConstants.kMinAreaOdom
+        && totalArea < LimelightConstants.kMinAreaGyro 
+        && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
+        && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity
+        && poseDistance < LimelightConstants.kMaxPoseDistance) {
 
             combinedPose = new Pose2d(
-                (robotPoseOne.getX() * weightOne) + (robotPoseTwo.getX() * weightTwo),
-                (robotPoseOne.getY() * weightOne) + (robotPoseTwo.getY() * weightTwo),
-                finalrotation
-            );
+                robotPose.getX(),robotPose.getY(), cachedRobotPose.getRotation()
+            ); 
 
             drivetrain.addVisionMeasurement(
                 combinedPose,
-                (PVresult.getTimestampSeconds() + PVresultTwo.getTimestampSeconds()) / 2.0,
+                llResult.timestampSeconds,   
                 LimelightConstants.kStdDevs
-            );
+                );
+        
         }
 
+        else if(totalArea > LimelightConstants.kMinAreaGyro
+            && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
+            && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity
+            && poseDistance < LimelightConstants.kMaxPoseDistance
+            && rotationdiffrence < LimelightConstants.kMaxRotationDifference){ 
+
+
+            drivetrain.addVisionMeasurement(
+                robotPose,
+                llResult.timestampSeconds,
+                LimelightConstants.kStdDevs
+                );
+        
+        }
     }
+    
+    
+
+
+
+
+
+    public void processDoubleCam(LimelightHelpers.PoseEstimate llResult, LimelightHelpers.PoseEstimate llResultTwo){
+
+        if (llResult.rawFiducials == null || llResult.rawFiducials.length == 0 ||
+        llResultTwo.rawFiducials == null || llResultTwo.rawFiducials.length == 0) {
+            return;
+        }
+
+
+        cachedRobotPose = drivetrain.getState().Pose;
+
+
+        double areaOne = getTotalTagArea(llResult);
+        double areaTwo = getTotalTagArea(llResultTwo);
+        
+        double translationalVelocity = Math.hypot(drivetrain.getState().Speeds.vxMetersPerSecond, drivetrain.getState().Speeds.vyMetersPerSecond);
+        double rotationalVelocity = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
+
+        double velocityPenalty = 1.0 - (translationalVelocity / LimelightConstants.kMaxTranslationalVelocity);
+        velocityPenalty = Math.max(0.1, velocityPenalty);
+
+        double confidenceOne = velocityPenalty * (areaOne );
+        double confidenceTwo = velocityPenalty * (areaTwo);
+
+        double totalConfidence = confidenceOne + confidenceTwo;
+
+        if (totalConfidence == 0) {
+            return;
+        }
+        
+        double weightOne = confidenceOne / totalConfidence;
+        double weightTwo = confidenceTwo / totalConfidence;
+
+        Pose2d robotPoseOne = llResult.pose;
+        Pose2d robotPoseTwo = llResultTwo.pose;
+
+
+        boolean updategyroOne = areaOne > LimelightConstants.kMinAreaGyro;
+        boolean updategyroTwo = areaTwo > LimelightConstants.kMinAreaGyro;
+
+        
+
+        
+        //if the CAM ONE area is in the gyro update range but CAM TWO area is not, use CAM ONE for gyro
+        if(updategyroOne && !(updategyroTwo)
+        && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
+        && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
+            
+            finalrotation = robotPoseOne.getRotation();
+            
+        }
+
+        //if the CAM TWO area is in the gyro update range but CAM ONE area is not, use CAM TWO for gyro
+
+        else if(!(updategyroOne) && updategyroTwo
+        && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
+        && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
+            
+            finalrotation = robotPoseTwo.getRotation();
+
+        }
+
+        //if the CAM TWO area is in the gyro update range AND CAM ONE area is in the gyro update range, combine the rotations for gyro
+
+
+        else if(updategyroOne && updategyroTwo
+        && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
+        && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
+            
+            finalrotation = robotPoseOne.getRotation().interpolate(robotPoseTwo.getRotation(), weightTwo);
+
+            
+
+        } 
+        
+        
+        //if the CAM TWO area is NOT in the gyro update range AND CAM ONE area is NOT 
+        //in the gyro update range, dont update gyro
+
+        
+        else if (!updategyroOne && !updategyroTwo
+        && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
+        && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity){
+            finalrotation = drivetrain.getState().RawHeading;
+        }
+
+        //if BOTH CAMS are NOT in the gyro update range AND velocities too high, do not take anything
+        else{
+            return;
+        }
+
+        combinedPose = new Pose2d(
+            (robotPoseOne.getX() * weightOne) + (robotPoseTwo.getX() * weightTwo),
+            (robotPoseOne.getY() * weightOne) + (robotPoseTwo.getY() * weightTwo),
+            finalrotation
+        );
+
+        double poseDistance = cachedRobotPose.getTranslation().getDistance(combinedPose.getTranslation());
+        double rotationdiffrence = Math.abs(cachedRobotPose.getRotation().minus(combinedPose.getRotation()).getDegrees());
+
+        if (poseDistance > LimelightConstants.kMaxPoseDistance){
+            return;
+        }
+        if(rotationdiffrence > LimelightConstants.kMaxRotationDifference){
+            return;
+        }
+        
+        drivetrain.addVisionMeasurement(
+            combinedPose,
+            (llResult.timestampSeconds + llResultTwo.timestampSeconds) / 2.0,
+            LimelightConstants.kStdDevs
+        );
+    }
+
+    
 
     @Override
     public boolean isFinished(){
         return false;
     }
+
+    private double getTotalTagArea(LimelightHelpers.PoseEstimate llresult){
+        if (llresult.rawFiducials == null || llresult.rawFiducials.length == 0) {
+            return 0.0;
+        }
+        double totalArea = 0.0;
+
+        for (LimelightHelpers.RawFiducial target : llresult.rawFiducials) {
+            totalArea += target.ta;
+        }
+        return totalArea;
+    }
+
+    /* private edu.wpi.first.math.Matrix<edu.wpi.first.math.numbers.N3, edu.wpi.first.math.numbers.N1> calculateDynamicStdDevs(
+        double totalArea, double translationalVelocity, double rotationalVelocity) {
+        
+        double basexyStdDev = LimelightConstants.kXyStdDev;
+        double basethetaStdDev = LimelightConstants.kThetaStdDev;
+
+        double areafactor = 1.0;
+        if (totalArea > LimelightConstants.kMinAreaGyro) {
+            // Good area: scale between 0.1 and 0.5
+            areafactor = 0.5 - (0.4 * Math.min(totalArea / 20.0, 1.0)); // Assumes max useful area ~20%
+        } else if (totalArea > LimelightConstants.kMinAreaOdom) {
+            // Medium area: scale between 0.5 and 1.0
+            double areaRange = LimelightConstants.kMinAreaGyro - LimelightConstants.kMinAreaOdom;
+            double areaNormalized = (totalArea - LimelightConstants.kMinAreaOdom) / areaRange;
+            areafactor = 1.0 - (0.5 * areaNormalized);
+        }
+
+        double transVelFactor = 0.5 + (1.5 * (translationalVelocity / LimelightConstants.kMaxTranslationalVelocity));
+
+        double rotVelFactor = 0.5 + (1.5 * (rotationalVelocity / LimelightConstants.kMaxRotationalVelocity));
+
+
+        double xyStdDev = basexyStdDev * areafactor * transVelFactor;
+        double thetaStdDev = basethetaStdDev * areafactor * rotVelFactor;
+
+        return edu.wpi.first.math.VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev);
+    } */
     
 }
