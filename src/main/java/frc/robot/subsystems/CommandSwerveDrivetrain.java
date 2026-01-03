@@ -288,6 +288,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        if (DriverStation.isDisabled()) {
+            setStateStdDevs(TrajectoryConstants.kOdomStdDevsDisabled);
+        } else {
+            setStateStdDevs(TrajectoryConstants.kOdomStdDevsEnabled);
+        }
         /* RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("limelight");
         LimelightResults llResult = LimelightHelpers.getLatestResults("limelight");
         if(llResult != null && llResult.valid && llResult.botpose_tagcount > 0 && fiducials.length > 0){

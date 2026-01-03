@@ -48,6 +48,21 @@ public final class Constants {
         public static final double RotationalkI = 0;
         public static final double RotationalkD = 0.1;
 
+        public static final double kXyOdomStdDevEnabled = 0.2;
+        public static final double kThetaOdomStdDevEnabled = 0.15;
+
+        public static final double kXyOdomStdDevDisabled = 1.0;
+        public static final double kThetaOdomStdDevDisabled = 1.0;
+
+        public static final Matrix<N3, N1> kOdomStdDevsEnabled = VecBuilder.fill(
+            kXyOdomStdDevEnabled,
+            kXyOdomStdDevEnabled,
+            kThetaOdomStdDevEnabled);
+
+        public static final Matrix<N3, N1> kOdomStdDevsDisabled = VecBuilder.fill(
+            kXyOdomStdDevDisabled,
+            kXyOdomStdDevDisabled,
+            kThetaOdomStdDevDisabled);
     }
 
     
@@ -58,6 +73,7 @@ public final class Constants {
 
         public static final double kXyStdDev = 0.2;
         public static final double kThetaStdDev = 3;
+
         public static final Matrix<N3, N1> kStdDevs = VecBuilder.fill(
             kXyStdDev,
             kXyStdDev,
@@ -76,6 +92,7 @@ public final class Constants {
 
         public static final double kMaxTranslationalVelocity = 9.0; // meters per second
         public static final double kMaxRotationalVelocity = 360; // degrees per second
+
 
     }
 }
