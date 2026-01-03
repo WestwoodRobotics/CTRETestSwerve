@@ -296,21 +296,11 @@ public class PhotonDefault extends Command{
         double basexyStdDev = LimelightConstants.kXyStdDev;
         double basethetaStdDev = LimelightConstants.kThetaStdDev;
 
-        double areafactor = 1.0;
-        
-        if (totalArea > LimelightConstants.kMinAreaGyro) {
-            // Good area: scale between 0.1 and 0.5
-            areafactor = 0.5 - (0.4 * Math.min(totalArea / 20.0, 1.0)); // Assumes max useful area ~20%
-        } else if (totalArea > LimelightConstants.kMinAreaOdom) {
-            // Medium area: scale between 0.5 and 1.0
-            double areaRange = LimelightConstants.kMinAreaGyro - LimelightConstants.kMinAreaOdom;
-            double areaNormalized = (totalArea - LimelightConstants.kMinAreaOdom) / areaRange;
-            areafactor = 1.0 - (0.5 * areaNormalized);
-        }
+        double areafactor = 1.0 - (0.9 * Math.min(totalArea, 1.0));
 
-        double transVelFactor = 0.5 + (1.5 * (translationalVelocity / LimelightConstants.kMaxTranslationalVelocity));
+        double transVelFactor = 0.3 + (1.5 * (translationalVelocity / LimelightConstants.kMaxTranslationalVelocity));
 
-        double rotVelFactor = 0.5 + (1.5 * (rotationalVelocity / LimelightConstants.kMaxRotationalVelocity));
+        double rotVelFactor = 0.3 + (1.5 * (rotationalVelocity / LimelightConstants.kMaxRotationalVelocity));
 
 
         double xyStdDev = basexyStdDev * areafactor * transVelFactor;
