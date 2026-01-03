@@ -41,7 +41,7 @@ import frc.robot.commands.swerve.Orchestrate;
 import frc.robot.commands.swerve.followObject;
 import frc.robot.commands.swerve.lockToCenter;
 import frc.robot.commands.vision.AutoAlign;
-import frc.robot.commands.vision.PhotonDefault;
+import frc.robot.commands.vision.LimelightDefaultCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.LED;
@@ -94,7 +94,7 @@ public class RobotContainer {
         faceCenter.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
         try{
             limelight = new Limelight(led);
-            limelight.setDefaultCommand(new PhotonDefault(limelight, drivetrain));
+            limelight.setDefaultCommand(new LimelightDefaultCommand(limelight, drivetrain));
         } catch(Exception exc){
             limelight = null;
         }

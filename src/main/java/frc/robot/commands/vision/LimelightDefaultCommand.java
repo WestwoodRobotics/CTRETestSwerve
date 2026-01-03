@@ -22,7 +22,7 @@ import frc.robot.Constants.LimelightConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Limelight;
 
-public class PhotonDefault extends Command{
+public class LimelightDefaultCommand extends Command{
     private final Limelight vision;
     private final CommandSwerveDrivetrain drivetrain;
     private Pose2d combinedPose = new Pose2d();
@@ -34,7 +34,7 @@ public class PhotonDefault extends Command{
     private Pose3d targetPoseTwo = new Pose3d();
     private Double[] targetPoseArrayDashboard = new Double[4];
 
-    public PhotonDefault(Limelight camera, CommandSwerveDrivetrain drivetrain){
+    public LimelightDefaultCommand(Limelight camera, CommandSwerveDrivetrain drivetrain){
         this.vision = camera;
         this.drivetrain = drivetrain;
         addRequirements(camera);
@@ -166,7 +166,10 @@ public class PhotonDefault extends Command{
         processSingleCam(llResult);
         processSingleCam(llResultTwo);
 
-      /*   cachedRobotPose = drivetrain.getState().Pose;
+      /* 
+        The garg has spoken on this old implementation
+
+         cachedRobotPose = drivetrain.getState().Pose;
 
 
         double areaOne = getTotalTagArea(llResult);
@@ -290,7 +293,7 @@ public class PhotonDefault extends Command{
         return totalArea;
     }
 
-     private edu.wpi.first.math.Matrix<edu.wpi.first.math.numbers.N3, edu.wpi.first.math.numbers.N1> calculateDynamicStdDevs(
+     private Matrix<N3, N1> calculateDynamicStdDevs(
         double totalArea, double translationalVelocity, double rotationalVelocity) {
         
         double basexyStdDev = LimelightConstants.kXyStdDev;
@@ -306,6 +309,9 @@ public class PhotonDefault extends Command{
         double xyStdDev = basexyStdDev * areafactor * transVelFactor;
         double thetaStdDev = basethetaStdDev * areafactor * rotVelFactor;
 
+        SmartDashboard.putNumber("Vision XY std", xyStdDev);
+        SmartDashboard.putNumber("Vision Theta std", thetaStdDev);
+        
         return edu.wpi.first.math.VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev);
     } 
     
