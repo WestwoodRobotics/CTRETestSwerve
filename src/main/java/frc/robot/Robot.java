@@ -7,7 +7,15 @@ package frc.robot;
 
 import com.ctre.phoenix6.controls.SolidColor;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.StructLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -15,6 +23,11 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+
+  private StructLogEntry<Pose2d> poseLog;
+  private StructLogEntry<Pose3d> ComponentPoseZero;
+  private StructLogEntry<Pose3d> ComponentPoseFinal;
+
 
   public Robot() {
     m_robotContainer = new RobotContainer();
@@ -28,6 +41,13 @@ public class Robot extends TimedRobot {
           System.out.println("Failed to play music" + e.getMessage());
           e.printStackTrace();
       }
+
+      DataLogManager.start("/media/sda1");
+      DataLog log = DataLogManager.getLog();
+      poseLog = StructLogEntry.create(log, "/drivetrain/pose", Pose2d.struct);
+      ComponentPoseZero = StructLogEntry.create(log, "/drivetrain/ComponentPoseZero", Pose3d.struct);
+    ComponentPoseFinal = StructLogEntry.create(log, "/drivetrain/ComponentPoseFinal", Pose3d.struct);
+      DriverStation.startDataLog(DataLogManager.getLog());
    
   }
   @Override
@@ -68,10 +88,17 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    Pose2d robotPose = m_robotContainer.drivetrain.getState().Pose;
+    poseLog.append(robotPose);
+    ComponentPoseZero.append(new Pose3d());
+    ComponentPoseFinal.append(new Pose3d(0, 0.0, 0.82, new Rotation3d(0.0, Math.sin(Timer.getTimestamp()) - 1.0, 0.0)));
+  }
 
   @Override
-  public void teleopExit() {}
+  public void teleopExit() {
+    DataLogManager.stop();
+  }
 
   @Override
   public void testInit() {
@@ -85,5 +112,8 @@ public class Robot extends TimedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    
+    
+  }
 }

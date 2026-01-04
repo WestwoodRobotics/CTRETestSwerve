@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 
@@ -63,6 +64,10 @@ public final class Constants {
             kXyOdomStdDevDisabled,
             kXyOdomStdDevDisabled,
             kThetaOdomStdDevDisabled);
+        
+
+        public static final double kMaxAccelerationMetersPerSecondSquared = Units.inchesToMeters(500);;
+        //public static final double kMaxAngularAccelerationRadiansPerSecondSquared = 2;
     }
 
     

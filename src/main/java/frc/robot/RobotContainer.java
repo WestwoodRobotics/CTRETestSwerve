@@ -22,6 +22,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -87,6 +88,14 @@ public class RobotContainer {
     private Limelight limelight;
 
 
+    private final SlewRateLimiter xLimiter = new SlewRateLimiter(
+        TrajectoryConstants.kMaxAccelerationMetersPerSecondSquared
+    );
+    private final SlewRateLimiter yLimiter = new SlewRateLimiter(
+        TrajectoryConstants.kMaxAccelerationMetersPerSecondSquared
+    );
+    
+
     public RobotContainer() {
         autoChooser = AutoBuilder.buildAutoChooser();
 
@@ -120,9 +129,11 @@ public class RobotContainer {
                     double xMagnitude = Math.pow(magnitude,2) * Math.cos(angle); // squares magnitude, then multiplies by cos(angle) to get x mag
                     double yMagnitude = Math.pow(magnitude,2) * Math.sin(angle); // squares magnitude, then multiplies by sin(angle) to get y mag
                     
-                    return drive.withVelocityX(-(yMagnitude) * MaxSpeed) // Drive forward with squared Y (maintaining sign)
-                    .withVelocityY(-(xMagnitude) * MaxSpeed) // Drive left with squared X (maintaining sign)
-                    .withRotationalRate(-Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate); // Drive counterclockwise with squared X (maintaining sign)
+                    double rotRate = -Math.copySign(joystick.getRightX() * joystick.getRightX(), joystick.getRightX()) * MaxAngularRate;
+
+                    return drive.withVelocityX(xLimiter.calculate(-(yMagnitude) * MaxSpeed)) // Drive forward with squared Y (maintaining sign)
+                    .withVelocityY(yLimiter.calculate(-(xMagnitude) * MaxSpeed)) // Drive left with squared X (maintaining sign)
+                    .withRotationalRate(rotRate); // Drive counterclockwise with squared X (maintaining sign)
                 }  
             )
         );
