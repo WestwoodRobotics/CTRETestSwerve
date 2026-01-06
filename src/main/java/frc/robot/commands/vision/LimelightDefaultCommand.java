@@ -129,7 +129,8 @@ public class LimelightDefaultCommand extends Command{
         && totalArea < LimelightConstants.kMinAreaGyro 
         && translationalVelocity < LimelightConstants.kMaxTranslationalVelocity
         && rotationalVelocity < LimelightConstants.kMaxRotationalVelocity
-        && poseDistance < LimelightConstants.kMaxPoseDistance) {
+        && poseDistance < LimelightConstants.kMaxPoseDistance
+        && rotationdiffrence < LimelightConstants.kMaxRotationDifference) {
 
             combinedPose = new Pose2d(
                 robotPose.getX(),robotPose.getY(), cachedRobotPose.getRotation()
