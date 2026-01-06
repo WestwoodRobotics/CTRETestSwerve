@@ -14,6 +14,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.util.datalog.StructArrayLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,14 +34,22 @@ public class LimelightDefaultCommand extends Command{
     private Rotation2d finalrotation = new Rotation2d();
     private LimelightHelpers.LimelightResults resultsOne;
     private LimelightHelpers.LimelightResults resultsTwo;
-    private Pose3d targetPoseOne = new Pose3d();
-    private Pose3d targetPoseTwo = new Pose3d();
-    private Double[] targetPoseArrayDashboard = new Double[4];
+
+    private StructArrayLogEntry<Pose3d> visionTargetsLog;
+    private StructArrayPublisher<Pose3d> visionTargetsPublisher;
 
     public LimelightDefaultCommand(Limelight camera, CommandSwerveDrivetrain drivetrain){
         this.vision = camera;
         this.drivetrain = drivetrain;
         addRequirements(camera);
+
+        var log = DataLogManager.getLog();
+        visionTargetsLog = StructArrayLogEntry.create(log, "/vision/targetPoses", Pose3d.struct);
+
+        visionTargetsPublisher = NetworkTableInstance.getDefault()
+            .getStructArrayTopic("/vision/targetPoses", Pose3d.struct)
+            .publish();
+
     }
 
     @Override
@@ -62,35 +74,27 @@ public class LimelightDefaultCommand extends Command{
         // CAM ONE can see tag, CAM TWO cannot
         if(hasTargetsOne && !hasTargetsTwo) {
             processSingleCam(llResultOne);
-            if(resultsOne.targets_Fiducials.length >0){
+            logDetectedTags(resultsOne, null);
 
-                LimelightHelpers.LimelightTarget_Fiducial[] target = resultsOne.targets_Fiducials;
-                
-                int id = (int) target[0].fiducialID;
-        
-                var tagposeoptional = vision.getLayout().getTagPose(id);
-        
-                if(tagposeoptional.isPresent()){
-                    targetPoseOne = tagposeoptional.get();
-        
-                }
-                targetPoseArrayDashboard[0] = targetPoseOne.getX(); // X translation
-                targetPoseArrayDashboard[1] = targetPoseOne.getY();// Y translation
-                targetPoseArrayDashboard[2] = targetPoseOne.getZ(); // Z translation
-                targetPoseArrayDashboard[3] = targetPoseOne.getRotation().toRotation2d().getRadians();
-
-                SmartDashboard.putNumberArray("target", targetPoseArrayDashboard);
-            }
         }   
         
         // CAM TWO can see tag, CAM ONE cannot
         else if(!hasTargetsOne && hasTargetsTwo) {
             processSingleCam(llResultTwo);
+            logDetectedTags(null, resultsTwo);
+
         }
         
         //CAM TWO AND CAM ONE can see tags
         else if(hasTargetsOne && hasTargetsTwo){
             processDoubleCam(llResultOne, llResultTwo);
+            logDetectedTags(resultsOne, resultsTwo);
+
+        }
+        else {
+            // No targets, log empty array
+            visionTargetsLog.append(new Pose3d[0]);
+            visionTargetsPublisher.set(new Pose3d[0]);
         }
     }
 
@@ -274,8 +278,72 @@ public class LimelightDefaultCommand extends Command{
         ); */
     }
 
+
+
+    private void logDetectedTags(LimelightHelpers.LimelightResults resultsOne, 
+                                  LimelightHelpers.LimelightResults resultsTwo) {
+        int totalTags = 0;
+        
+        if (resultsOne != null && resultsOne.targets_Fiducials != null) {
+            totalTags += resultsOne.targets_Fiducials.length;
+        }
+        if (resultsTwo != null && resultsTwo.targets_Fiducials != null) {
+            totalTags += resultsTwo.targets_Fiducials.length;
+        }
+        
+        if (totalTags == 0) {
+            visionTargetsLog.append(new Pose3d[0]);
+            visionTargetsPublisher.set(new Pose3d[0]);
+            return;
+        }
+
+        Pose3d[] tagPoses = new Pose3d[totalTags];
+        int index = 0;
+        
+        // Add tags from camera one
+        if (resultsOne != null && resultsOne.targets_Fiducials != null) {
+            for (LimelightHelpers.LimelightTarget_Fiducial target : resultsOne.targets_Fiducials) {
+                int id = (int) target.fiducialID;
+                Optional<Pose3d> tagPoseOptional = vision.getLayout().getTagPose(id);
+                
+                if (tagPoseOptional.isPresent()) {
+                    tagPoses[index++] = tagPoseOptional.get();
+                } else {
+                    tagPoses[index++] = new Pose3d();
+                }
+            }
+        }
+        
+        // Add tags from camera two
+        if (resultsTwo != null && resultsTwo.targets_Fiducials != null) {
+            for (LimelightHelpers.LimelightTarget_Fiducial target : resultsTwo.targets_Fiducials) {
+                int id = (int) target.fiducialID;
+                Optional<Pose3d> tagPoseOptional = vision.getLayout().getTagPose(id);
+                
+                if (tagPoseOptional.isPresent()) {
+                    tagPoses[index++] = tagPoseOptional.get();
+                } else {
+                    tagPoses[index++] = new Pose3d();
+                }
+            }
+        }
+        
+        visionTargetsLog.append(tagPoses);
+        visionTargetsPublisher.set(tagPoses);
+
+        
+    }
+
+
     
 
+    
+    @Override   
+    public void end(boolean interrupted){
+        visionTargetsPublisher.close();
+
+    }
+    
     @Override
     public boolean isFinished(){
         return false;
