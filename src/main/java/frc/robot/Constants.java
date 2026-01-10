@@ -65,4 +65,43 @@ public final class Constants {
         public static final double kMid = 0.0;
         public static final double kHigh = 0.25;
     }
+
+    public static final class TurretConstants {
+        // Motor IDs and CANbus
+        public static final int kTurretMotorId = 21;
+        public static final int kFlywheelMotorId = 22;
+        public static final String kTurretCANBus = "SwerveCAN";
+
+        // Turret constants (position control with MotionMagicVoltage)
+        public static final double kTurretGearRatio = 15.0; // Motor rotations to turret rotations
+        public static final double kTurretMMCruiseVelocity = 2.0; // rotations per second
+        public static final double kTurretMMAcceleration = 4.0; // rotations per second squared
+
+        public static final double kTurretS = 0.0; // Static gain
+        public static final double kTurretV = 0.12; // Velocity gain
+        public static final double kTurretA = 0.0; // Acceleration gain
+
+        public static final double kTurretP = 100.0; // Proportional gain
+        public static final double kTurretI = 0.0; // Integral gain
+        public static final double kTurretD = 0.0; // Derivative gain
+
+        public static final double kTurretPositionTolerance = 0.01; // rotations
+        public static final double kTurretMinPosition = -0.5; // rotations
+        public static final double kTurretMaxPosition = 0.5; // rotations
+
+        // Flywheel constants (velocity control with MotionMagicVelocityVoltage)
+        public static final double kFlywheelGearRatio = 1.0; // Motor rotations to flywheel rotations
+        public static final double kFlywheelMMCruiseVelocity = 50.0; // rotations per second
+        public static final double kFlywheelMMAcceleration = 100.0; // rotations per second squared
+
+        public static final double kFlywheelS = 0.0; // Static gain
+        public static final double kFlywheelV = 0.08; // Velocity gain
+        public static final double kFlywheelA = 0.0; // Acceleration gain
+
+        public static final double kFlywheelP = 0.11; // Proportional gain
+        public static final double kFlywheelI = 0.0; // Integral gain
+        public static final double kFlywheelD = 0.0; // Derivative gain
+
+        public static final double kFlywheelVelocityTolerance = 2.0; // rotations per second
+    }
 }
